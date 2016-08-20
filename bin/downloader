@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+const downloader = require('../app');
+
+// options
+program
+  .option('-H, --host <host>', 'specify the host [0.0.0.0]', '0.0.0.0')
+  .option('-p, --port <port>', 'specify the port [19001]', '19001')
+  .option('-b, --backlog <size>', 'specify the backlog size [511]', '511')
+  .parse(process.argv);
+
+const app = downloader();
+
+app.listen(program.port, program.host, ~~program.backlog, function () {
+  console.log('[ + ] Downloader Listening on %s:%s', program.host, program.port);
+});
