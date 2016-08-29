@@ -22,6 +22,21 @@ module.exports = function() {
   // compression
   app.use(compress())
 
+  // handle application errors
+  app.use(function *(next) {
+    try {
+      yield next
+    } catch(e) {
+
+      // check application fatal errors
+      if (e instanceof TypeError)
+        return log('fatal', 'downloader_fatal', { description: e.message, stack: e.stack })
+
+      // errors throwed by app
+      log('error', e.message, e.info)
+    }
+  })
+
   // define logger
   app.use(function* (next) {
 
