@@ -29,7 +29,7 @@ module.exports = function() {
     } catch(e) {
 
       // check application fatal errors
-      if (e instanceof TypeError)
+      if (e instanceof TypeError || e instanceof ReferenceError)
         return this.log('fatal', 'downloader_fatal', { description: e.message, stack: e.stack })
 
       // errors throwed by app
