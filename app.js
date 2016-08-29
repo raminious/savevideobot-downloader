@@ -30,10 +30,10 @@ module.exports = function() {
 
       // check application fatal errors
       if (e instanceof TypeError)
-        return log('fatal', 'downloader_fatal', { description: e.message, stack: e.stack })
+        return this.log('fatal', 'downloader_fatal', { description: e.message, stack: e.stack })
 
       // errors throwed by app
-      log('error', e.message, e.info)
+      this.log('error', e.message, e.info)
     }
   })
 
