@@ -28,12 +28,17 @@ module.exports = function() {
       yield next
     } catch(e) {
 
+      if (process.env.NODE_ENV != 'production')
+        console.log(e, e.stack)
+
       // check application fatal errors
       if (e instanceof TypeError || e instanceof ReferenceError)
-        return this.log('fatal', 'downloader_fatal', { description: e.message, stack: e.stack })
+        return this.log('fatal', 'downloader_bug', { description: e.message, stack: e.stack })
+      else
+        this.log('error', e.message, e.info) // errors throwed by app
 
-      // errors throwed by app
-      this.log('error', e.message, e.info)
+      this.status = e.status || 500
+      this.body = e.message || ''
     }
   })
 
@@ -59,8 +64,9 @@ module.exports = function() {
   })
 
   //routes
-  app.use(mount('/download',require('./lib/api/info')))
-  app.use(mount('/download',require('./lib/api/request')))
+  app.use(mount(require('./lib/explore')))
+  app.use(mount(require('./lib/send')))
+  app.use(mount(require('./lib/stream')))
 
   return app
 }
