@@ -24,9 +24,6 @@ const extractors = {
   twitter: require('../extractors/twitter')
 }
 
-// promisify remote-file-size
-const remoteAsync = bluebird.promisify(remote)
-
 const WORKER_NATIVE = 'native'
 const WORKER_SPAWN = 'spawn'
 
@@ -123,6 +120,7 @@ const getMedia = function* (id, format) {
   let download = media.download
   let stream = media.stream
   let worker = media.worker
+  let size = media.size
 
   // if media has formats, check for requested format
   if (media.formats != null && media.formats.length > 0) {
@@ -137,10 +135,12 @@ const getMedia = function* (id, format) {
     extension = fmt.ext
     download = fmt.download
     stream = fmt.stream
+    size = fmt.size
   }
 
   // get media size
-  let size = yield getMediaSize(download)
+  if (size == null)
+    size = yield getMediaSize(download)
 
   // if file is less than 5k, throw error
   if (size < 5 * 1024)
@@ -164,18 +164,26 @@ const getMedia = function* (id, format) {
 /*
 * get remote media size by sending http headers
 */
-const getMediaSize = function* (url) {
+const getMediaSize = function (url) {
 
   const options = {
     url,
+    timeout: 10000,
     headers: { 'User-Agent': userAgent },
   }
 
   if (process.env.NODE_ENV == 'production')
     options.localAddress = addresses[0]
 
+  console.log(options)
+
   // get media file size
-  return yield remoteAsync(options)
+  return new Promise((resolve, reject) => {
+    remote(options, function(e, size) {
+      if (e != null) return reject(e)
+      return resolve(size)
+    })
+  })
 }
 
 /**
