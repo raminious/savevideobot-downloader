@@ -170,14 +170,12 @@ const getMediaSize = function (url) {
 
   const options = {
     url,
-    timeout: 10000,
+    timeout: 15000,
     headers: { 'User-Agent': userAgent },
   }
 
   if (process.env.NODE_ENV == 'production')
     options.localAddress = addresses[0]
-
-  console.log(options)
 
   // get media file size
   return new Promise((resolve, reject) => {
@@ -394,7 +392,7 @@ const _streamNative = function (media) {
 
   const req = request(options)
   .on('error', e => {
-    console.log(e)
+    //console.log(e)
   })
 
   return new Promise((resolve, reject) => {
