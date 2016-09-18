@@ -114,7 +114,7 @@ const getMedia = function* (id, format) {
     }
   }
   catch(e) {
-    return null
+    throw new Error('download engine can not connect to api server')
   }
 
   let url = media.url
@@ -253,8 +253,6 @@ const download = function (media, worker, req) {
   worker = media.worker || worker || config.download.defaultWorker
   req = req || null
 
-  const sourceAddress = changeLocalAddress()
-
   if (media.preferStream)
     return stream(media, worker, req)
 
@@ -346,7 +344,7 @@ const _streamSpawn = function (media, req) {
   // enable source address on production machine
   if (process.env.NODE_ENV == 'production') {
     args.push('--source-address')
-    args.push(sourceAddress)
+    args.push(addresses[0])
   }
 
   // add url
