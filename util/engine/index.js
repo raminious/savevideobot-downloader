@@ -106,8 +106,8 @@ const getMedia = function* (id, format) {
       // get media from api server
       media = (yield agent.get(config.api + '/media/status/' + id)).body
 
-      // store media in cache for 3hours
-      cache.set(key, media, 10 * 60)
+      // store media in cache for 3minutes
+      cache.set(key, media, 3 * 60)
     }
   }
   catch(e) {
@@ -116,6 +116,7 @@ const getMedia = function* (id, format) {
 
   let url = media.url
   let filename = media.title + '.' + media.extension
+  let duration = ~~media.duration
   let extension = media.extension
   let download = media.download
   let stream = media.stream
@@ -150,10 +151,11 @@ const getMedia = function* (id, format) {
   return {
     id,
     format,
+    filename,
+    duration,
     url,
     download,
     stream,
-    filename,
     extension,
     size,
     preferStream: true,
