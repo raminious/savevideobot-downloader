@@ -35,7 +35,7 @@ module.exports = function() {
       if (e instanceof TypeError || e instanceof ReferenceError)
         return this.log('fatal', 'downloader_bug', { description: e.message, stack: e.stack })
       else
-        this.log('error', e.message, e.info) // errors throwed by app
+        this.log('error', e.message, e.info || {}) // errors throwed by app
 
       this.status = e.status || 500
       this.body = e.message || ''
