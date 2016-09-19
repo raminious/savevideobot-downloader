@@ -114,6 +114,7 @@ const getMedia = function* (id, format) {
     throw new Error('download engine can not connect to api server')
   }
 
+  let site = media.site
   let url = media.url
   let filename = media.title + '.' + media.extension
   let duration = ~~media.duration
@@ -151,6 +152,7 @@ const getMedia = function* (id, format) {
   return {
     id,
     format,
+    site,
     filename,
     duration,
     url,
