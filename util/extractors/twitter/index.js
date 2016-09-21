@@ -16,7 +16,10 @@ _.each(tokens, (token, key) => {
 
 exports.dump = function(url) {
 
-  const match = url.match(/(\d+)$/gi)
+  // remove query string
+  url = url.split('?')[0]
+
+  const match = url.match(/(\d{10,30})$/gi)
   const id = match != null? match[0]: null
 
   return new Promise((resolve, reject) => {
