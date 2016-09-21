@@ -19,7 +19,7 @@ exports.dump = function(url) {
   // remove query string
   url = url.split('?')[0]
 
-  const match = url.match(/(\d{10,30})$/gi)
+  const match = url.match(/(\d{15,30})$/gi)
   const id = match != null? match[0]: null
 
   return new Promise((resolve, reject) => {
@@ -62,7 +62,13 @@ exports.dump = function(url) {
         worker: 'native',
         formats: {}
       })
-    }, reject)
+    }, e => {
+      const error = e[0]
+      error.action = 'dump'
+      error.target = 'twitter'
+      error.description = 'Twitter said: ' + error.message
+      reject(error)
+    })
   })
 }
 
