@@ -118,7 +118,11 @@ const getMedia = function* (id, format) {
     }
   }
   catch(e) {
-    throw new Error('download engine can not connect to api server')
+    throw {
+      message: 'download engine can not connect to api server',
+      description: e.message,
+      task: 'engine/getmedia'
+    }
   }
 
   let site = media.site
@@ -157,6 +161,7 @@ const getMedia = function* (id, format) {
       '\nFile size: ' + bytes(size))
 
   return {
+    preferStream: true,
     id,
     format,
     site,
@@ -167,7 +172,6 @@ const getMedia = function* (id, format) {
     stream,
     extension,
     size,
-    preferStream: true,
     worker
   }
 }
