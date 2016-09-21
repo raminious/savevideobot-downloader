@@ -17,6 +17,9 @@ const _ = require('underscore')
 const cache = require('../cache')
 const config = require('../../config.json')
 
+// add retry plugin to superagent library
+require('superagent-retry')(agent)
+
 /*
 * list of external extractors except ytdl
 */
@@ -104,7 +107,11 @@ const getMedia = function* (id, format) {
 
     if (media == null) {
       // get media from api server
-      media = (yield agent.get(config.api + '/media/status/' + id)).body
+      media = yield agent
+        .get(config.api + '/media/status/' + id)
+        .retry(5)
+        
+      media = media.body
 
       // store media in cache for 3minutes
       cache.set(key, media, 3 * 60)
