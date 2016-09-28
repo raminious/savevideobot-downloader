@@ -14,7 +14,9 @@ const path = require('path')
 const mkdirp = require('mkdirp')
 const bytes = require('bytes')
 const _ = require('underscore')
+const Media = require('../resources/media')
 const cache = require('../cache')
+const check = require('../filters')('porn')
 const config = require('../../config.json')
 
 // add retry plugin to superagent library
@@ -24,7 +26,8 @@ require('superagent-retry')(agent)
 * list of external extractors except ytdl
 */
 const extractors = {
-  twitter: require('../extractors/twitter')
+  twitter : require('../extractors/twitter'),
+  google  : require('../extractors/google')
 }
 
 const WORKER_NATIVE = 'native'
@@ -59,13 +62,14 @@ const changeLocalAddress = function() {
 /**
 * return log info
 */
-const getLogInfo = function(action, args, description) {
+const getLogInfo = function(action, source_address, args, description, message) {
   return {
     target: 'ytdl',
     action,
     description,
+    message,
     args,
-    source_address: addresses[0]
+    source_address
   }
 }
 
@@ -107,20 +111,16 @@ const getMedia = function* (id, format) {
 
     if (media == null) {
       // get media from api server
-      media = yield agent
-        .get(config.api + '/media/status/' + id)
-        .retry(5)
-        
-      media = media.body
+      media = yield Media.status(id)
 
-      // store media in cache for 3minutes
-      cache.set(key, media, 3 * 60)
+      // store media in cache for 15minutes
+      cache.set(key, media, 15 * 60)
     }
   }
   catch(e) {
     throw {
-      message: 'download engine can not connect to api server',
-      description: e.message,
+      message: e.message || 'Internal server error. Downloader engine can not communicate with api server',
+      description: e.response.text,
       task: 'engine/getmedia'
     }
   }
@@ -128,6 +128,7 @@ const getMedia = function* (id, format) {
   let site = media.site
   let url = media.url
   let filename = media.title + '.' + media.extension
+  let thumbnail = media.thumbnail
   let duration = ~~media.duration
   let extension = media.extension
   let download = media.download
@@ -141,8 +142,12 @@ const getMedia = function* (id, format) {
     // search for required format data
     let fmt = _.findWhere(media.formats, { id: ~~format })
 
-    if (fmt == null)
-      throw new Error('Invalid media format')
+    if (fmt == null) {
+      throw {
+        type: 'format',
+        message: 'Invalid media format'
+      }
+    }
 
     filename = media.title + '.' + fmt.ext
     extension = fmt.ext
@@ -156,9 +161,15 @@ const getMedia = function* (id, format) {
     size = yield getMediaSize(download)
 
   // if file is less than 5k, throw error
-  if (size < 5 * 1024)
-    throw new Error('File is too small or is stream, we can not download stream files' +
-      '\nFile size: ' + bytes(size))
+  if (size < 5 * 1024) {
+    throw { 
+      type: 'stream',
+      message: 'File is too small or is stream (streams not supported)\n' + 'File size: ' + bytes(size) 
+    }
+  }
+
+  // add title parameter to download link
+  download = download + '&title=' + filename
 
   return {
     preferStream: true,
@@ -168,6 +179,7 @@ const getMedia = function* (id, format) {
     filename,
     duration,
     url,
+    thumbnail,
     download,
     stream,
     extension,
@@ -234,20 +246,42 @@ const dump = function (url) {
   let args = parseArguments([
     'dump-json',
     'no-warnings',
+    'socket-timeout:10',
     'source-address:' + sourceAddress
   ])
 
   return new Promise((resolve, reject) => {
 
     const command = util.format('%s %s "%s"', getExecutable(), args, url)
-    shell.exec(command, { silent, async}, (code, stdout, stderr) => {
+    const child = shell.exec(command, { silent, async}, (code, stdout, stderr) => {
 
       // error happened
-      if (~~code > 0)
-        return reject(getLogInfo('dump', args, stderr))
+      if (~~code > 0 || stderr.length > 0) {
+        child.kill()
+
+        // get error description
+        let description = stderr
+
+        // make error message human readable
+        const match = description.match(/said:.*\./) || description.match(/ERROR:[^;|^:|^.]*/)
+
+        description = (match != null)? 
+          match[0].replace(/ERROR:|said:/, '').trim(): 
+          'Can not download your media file'
+
+        return reject(getLogInfo('dump', sourceAddress, args, stderr, description))
+      }
 
       stdout = JSON.parse(stdout)
       stdout.requested_formats = []
+
+      // filters
+      try {
+        check.porn(stdout.extractor, stdout.title, url)
+      }
+      catch(e) {
+        return reject(e)
+      }
 
       return resolve(stdout)
     })
@@ -271,9 +305,6 @@ const download = function (media, worker, req) {
   if (media == null)
     return false
 
-  worker = media.worker || worker || config.download.defaultWorker
-  req = req || null
-
   if (media.preferStream)
     return stream(media, worker, req)
 
@@ -284,6 +315,11 @@ const download = function (media, worker, req) {
 * save media on disk
 */
 const save = function (media, worker) {
+  
+  // change local address (round robin)
+  const sourceAddress = changeLocalAddress()
+
+  worker = media.worker || worker || config.download.defaultWorker
   worker = (worker == WORKER_NATIVE)? _saveNative: _saveSpawn
 
   const destination = getFileDestination(media.filename)
@@ -302,7 +338,8 @@ const _saveSpawn = function (media, destination) {
     'quiet',
     'no-warnings',
     'format:' + format,
-    'output:' + '"' + destination + '"'
+    'output:' + '"' + destination + '"',
+    'source-address:' + addresses[0]
   ])
 
   return new Promise((resolve, reject) => {
@@ -310,7 +347,7 @@ const _saveSpawn = function (media, destination) {
     shell.exec(command, { silent: true, async: true }, (code, stdout, stderr) => {
 
       if (~~code > 0)
-        return reject(getLogInfo('download', args, stderr))
+        return reject(getLogInfo('download', sourceAddress, args, stderr))
 
       return resolve(destination)
     })
@@ -343,7 +380,13 @@ const _saveNative = function(media, destination) {
 * stream media
 */
 const stream = function (media, worker, req) {
+  
+  // change local address (round robin)
+  const sourceAddress = changeLocalAddress()
+
+  worker = media.worker || worker || config.download.defaultWorker
   worker = (worker == WORKER_NATIVE)? _streamNative: _streamSpawn
+
   return worker(media, req)
 }
 
@@ -351,7 +394,7 @@ const stream = function (media, worker, req) {
 * stream media on https protocol via youtube-dl and process spawn
 */
 const _streamSpawn = function (media, req) {
-
+  
   const url = media.url
   const format = media.format
 
@@ -393,28 +436,41 @@ const _streamSpawn = function (media, req) {
 /*
 * stream media on https protocol via nodejs and `request` module
 */
-const _streamNative = function (media) {
+const _streamNative = function (media, req) {
+
+  const headers = { 
+    'User-Agent': userAgent 
+  }
+  
+  // support pause-reusme downloading
+  if (req.headers.range)
+    headers.range = req.headers.range
 
   const options = {
     url: media.download,
-    headers: { 'User-Agent': userAgent },
+    headers
   }
 
   if (process.env.NODE_ENV == 'production')
     options.localAddress = addresses[0]
 
-  const req = request(options)
-  .on('error', e => {
-    //console.log(e)
+  const download = request(options)
+  .on('error', e => {})
+
+  // kill downloader on closing socket
+  req.socket.on('close', () => {
+    download.abort()
   })
 
   return new Promise((resolve, reject) => {
-    return resolve(req)
+    return resolve(download)
   })
 }
 
 module.exports = {
   getMedia,
   dump,
-  download
+  download,
+  save,
+  stream
 }
