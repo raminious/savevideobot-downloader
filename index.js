@@ -3,8 +3,7 @@ const ratelimit = require('koa-ratelimit')
 const compress = require('koa-compress')
 const mount = require('koa-mount')
 const koa = require('koa')
-const request = require('superagent')
-const config = require('./config.json')
+const log = require('./log')
 
 module.exports = function() {
 
@@ -22,8 +21,14 @@ module.exports = function() {
   // compression
   app.use(compress())
 
+  // define logger
+  app.use(function* (next) {
+    this.log = log
+    yield* next
+  })
+
   // handle application errors
-  app.use(function *(next) {
+  app.use(function* (next) {
     try {
       yield next
     } catch(e) {
@@ -34,39 +39,17 @@ module.exports = function() {
       // check application fatal errors
       if (e instanceof TypeError || e instanceof ReferenceError)
         return this.log('fatal', 'downloader_bug', { description: e.message, stack: e.stack })
-      else
-        this.log('error', e.message, e.info || {}) // errors throwed by app
 
       this.status = e.status || 500
       this.body = e.message || ''
     }
   })
 
-  // define logger
-  app.use(function* (next) {
-
-    const log = config.log
-    this.log = (level, message, e) => {
-      request
-      .post(log.url)
-      .auth(log.auth.username, log.auth.password, { type: 'auto' })
-      .send({
-        id: this.id,
-        level,
-        short_message: message,
-        from: 'downloader'
-      })
-      .send(e)
-      .end((err, res) => {})
-    }
-
-    yield* next
-  })
-
   //routes
   app.use(mount(require('./lib/explore')))
   app.use(mount(require('./lib/send')))
   app.use(mount(require('./lib/stream')))
+  app.use(mount(require('./lib/download')))
 
   return app
 }
