@@ -1,0 +1,97 @@
+body {
+	text-align: center;
+	background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#e5c5c5)) fixed;
+	font-size: 16px;
+}
+
+.tl {
+	text-align: left;
+}
+
+.tr {
+	text-align: right;
+}
+
+.tc {
+	text-align: center;
+}
+
+.or-sep {
+  width: 100%;
+  margin: .7em auto;
+  overflow: hidden;
+  text-align: center;
+  font-weight: 300;
+  color: gray;
+}
+.or-sep:before, .or-sep:after {
+  content: "";
+  display: inline-block;
+  width: 50%;
+  margin: 0 .5em 0 -55%;
+  vertical-align: middle;
+  border-bottom: 1px solid;
+}
+
+.or-sep:after {
+  margin: 0 -55% 0 .5em;
+}
+
+.download {
+	margin-top: 10%;
+}
+
+.download .button.dl {
+	display: block;
+	padding: 15px 10px;
+	height: auto;
+	line-height: 20px;
+	font-size: 2rem;
+	color: #000
+}
+
+.download .button.dl .size {
+	display: block;
+	font-size: 1rem;
+	color: #fff;
+}
+
+.download .button.dl .site {
+	display: block;
+	font-size: 1rem;
+}
+
+.download .button.dl.mirror {
+	display: block;
+	background: #ccc;
+	border-color: #ccc;
+}
+
+.download .thumbnail {
+	border-radius: 3px;
+	border: 1px solid #eaeaea;
+	padding: 3px;
+	max-height: 400px;
+}
+
+.download .media-title {
+	font-size: 1.3rem;
+	font-weight: bold;
+}
+
+@media (max-width: 300px) {
+	.download .button.dl {
+		font-size: 1.3rem;
+	}
+
+	.download .button.dl .size,
+	.download .button.dl .site {
+		font-size: 1rem;
+	}
+}
+
+@media (max-width: 400px) {
+	.download .media-title {
+		display: none;
+	}
+}

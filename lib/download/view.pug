@@ -1,0 +1,27 @@
+doctype html
+html(lang="en")
+	head
+		style
+			include ./assets/normalize.css
+			include ./assets/skeleton.css
+			include ./assets/styles.css
+		title= 'SaveVideoBot - ' + media.filename.split('.')[0]
+	body
+		
+		div(class='container download')
+			div(class='row')
+				div(class='eight columns tl')
+					a(href=media.download, download=media.filename, class='button dl direct button-primary')
+						span Direct Download
+						span(class='site') from #{media.site} servers
+						span(class='size') #{media.size}
+
+					p(class='or-sep') or
+					a(href=media.stream, download=media.filename, class='button dl mirror button-primary')
+						span Mirror Download
+						span(class='site') from savevideobot servers
+
+
+				div(class='four columns')
+					img(src=media.thumbnail, class='thumbnail u-max-full-width') 
+					p(class='media-title') #{media.filename}
