@@ -4,7 +4,6 @@ const bluebird = require('bluebird')
 const shell = require('shelljs')
 const spawn = require('child_process').spawn
 const util = require('util')
-const agent = require('superagent')
 const parseDomain = require('parse-domain')
 const request = require('request')
 const remote = require('remote-file-size')
@@ -18,9 +17,6 @@ const Media = require('../resources/media')
 const cache = require('../cache')
 const check = require('../filters')('porn')
 const config = require('../../config.json')
-
-// add retry plugin to superagent library
-require('superagent-retry')(agent)
 
 /*
 * list of external extractors except ytdl
