@@ -23,8 +23,8 @@ module.exports = function (site, title, url) {
 
   // log porn requests
   if (find) {
-    throw { 
-      type: 'porn',
+    throw {
+      type: 'prn',
       message: 'We are so sorry, You are not able to download pornographic contents.',
       site,
       title,
