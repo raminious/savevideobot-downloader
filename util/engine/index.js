@@ -120,10 +120,11 @@ const getMedia = function* (id, format) {
 
   let site = media.site
   let url = media.url
-  let filename = media.title + '.' + media.extension
+  let title = media.title
+  let extension = media.extension
+  let filename = title + '.' + extension
   let thumbnail = media.thumbnail
   let duration = ~~media.duration
-  let extension = media.extension
   let download = media.download
   let stream = media.stream
   let worker = media.worker
@@ -169,6 +170,7 @@ const getMedia = function* (id, format) {
     id,
     format,
     site,
+    title,
     filename,
     duration,
     url,

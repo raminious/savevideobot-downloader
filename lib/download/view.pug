@@ -5,9 +5,9 @@ html(lang="en")
 			include ./assets/normalize.css
 			include ./assets/skeleton.css
 			include ./assets/styles.css
-		title= 'SaveVideoBot - ' + media.filename.split('.')[0]
+		title= 'SaveVideoBot - ' + media.title
 	body
-		
+
 		div(class='container download')
 			div(class='row')
 				div(class='eight columns tl')
@@ -23,5 +23,5 @@ html(lang="en")
 
 
 				div(class='four columns')
-					img(src=media.thumbnail, class='thumbnail u-max-full-width') 
+					img(src=media.thumbnail, class='thumbnail u-max-full-width')
 					p(class='media-title') #{media.filename}
