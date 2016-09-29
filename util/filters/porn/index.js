@@ -24,7 +24,7 @@ module.exports = function (site, title, url) {
   // log porn requests
   if (find) {
     throw {
-      type: 'prn',
+      type: 'filter_p0rn',
       message: 'We are so sorry, You are not able to download pornographic contents.',
       site,
       title,
