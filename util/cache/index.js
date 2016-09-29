@@ -1,21 +1,17 @@
 'use strict'
 
 const Promise = require('bluebird')
-const redis = require('redis')
-
-Promise.promisifyAll(redis.RedisClient.prototype)
-Promise.promisifyAll(redis.Multi.prototype)
-
+const redis = Promise.promisifyAll(require('redis'))
 const client = redis.createClient()
 
-exports.prefix = ''
+const prefix = 'downloader_'
 
 const get = function (key) {
-  return client.getAsync(this.prefix+key)
+  return client.getAsync(prefix+key)
 }
 
 const set = function (key, value, expire) {
-  key = this.prefix + key
+  key = prefix + key
   expire = expire || 1200 // 2min default
 
   client.set(key, JSON.stringify(value))

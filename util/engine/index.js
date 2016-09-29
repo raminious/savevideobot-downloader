@@ -33,9 +33,6 @@ const extractors = {
 const WORKER_NATIVE = 'native'
 const WORKER_SPAWN = 'spawn'
 
-// set cache prefix
-cache.prefix = 'dl_engine_'
-
 // shell exec options
 const silent = true
 const async = true
@@ -162,9 +159,9 @@ const getMedia = function* (id, format) {
 
   // if file is less than 5k, throw error
   if (size < 5 * 1024) {
-    throw { 
+    throw {
       type: 'stream',
-      message: 'File is too small or is stream (streams not supported)\n' + 'File size: ' + bytes(size) 
+      message: 'File is too small or is stream (streams not supported)\n' + 'File size: ' + bytes(size)
     }
   }
 
@@ -265,8 +262,8 @@ const dump = function (url) {
         // make error message human readable
         const match = description.match(/said:.*\./) || description.match(/ERROR:[^;|^:|^.]*/)
 
-        description = (match != null)? 
-          match[0].replace(/ERROR:|said:/, '').trim(): 
+        description = (match != null)?
+          match[0].replace(/ERROR:|said:/, '').trim():
           'Can not download your media file'
 
         return reject(getLogInfo('dump', sourceAddress, args, stderr, description))
@@ -315,7 +312,7 @@ const download = function (media, worker, req) {
 * save media on disk
 */
 const save = function (media, worker) {
-  
+
   // change local address (round robin)
   const sourceAddress = changeLocalAddress()
 
@@ -380,7 +377,7 @@ const _saveNative = function(media, destination) {
 * stream media
 */
 const stream = function (media, worker, req) {
-  
+
   // change local address (round robin)
   const sourceAddress = changeLocalAddress()
 
@@ -394,7 +391,7 @@ const stream = function (media, worker, req) {
 * stream media on https protocol via youtube-dl and process spawn
 */
 const _streamSpawn = function (media, req) {
-  
+
   const url = media.url
   const format = media.format
 
@@ -438,10 +435,10 @@ const _streamSpawn = function (media, req) {
 */
 const _streamNative = function (media, req) {
 
-  const headers = { 
-    'User-Agent': userAgent 
+  const headers = {
+    'User-Agent': userAgent
   }
-  
+
   // support pause-reusme downloading
   if (req.headers.range)
     headers.range = req.headers.range
