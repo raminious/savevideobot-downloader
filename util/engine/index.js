@@ -166,7 +166,7 @@ const getMedia = function* (id, format) {
   }
 
   // add title parameter to download link
-  download = download + '&title=' + filename
+  download = download + '&title=' + encodeURIComponent(filename)
 
   return {
     preferStream: true,
