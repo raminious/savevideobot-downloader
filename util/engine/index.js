@@ -269,11 +269,20 @@ const dump = function (url) {
         return reject(getLogInfo('dump', sourceAddress, args, stderr, description))
       }
 
+      // parse response to json
       stdout = JSON.parse(stdout)
 
-      if (stdout._type == 'playlist')
-        stdout = stdout.entries[0]
+      // if requested url is playlist and has video, select first video of playlist
+      if (stdout._type == 'playlist') {
 
+        // no video
+        if (stdout.entries.length == 0)
+          return reject({ message: 'This link has not any video associated.'})
+
+        stdout = stdout.entries[0]
+      }
+
+      // clean up
       stdout.requested_formats = []
 
       // filters
