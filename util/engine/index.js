@@ -241,7 +241,7 @@ const dump = function (url) {
   let args = parseArguments([
     'dump-json',
     'no-warnings',
-    'socket-timeout:10',
+    'socket-timeout:15',
     'source-address:' + sourceAddress
   ])
 
