@@ -22,7 +22,7 @@
     "koa-request-id": "^1.0.1",
     "koa-response-time": "^1.0.2",
     "koa-router": "^5.4.0",
-    "kue-jobs": "^1.1.1",
+    "kue": "^0.11.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.14.1",
     "parse-domain": "^0.2.1",
