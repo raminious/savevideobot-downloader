@@ -162,8 +162,9 @@ const getMedia = function* (id, format) {
     }
   }
 
-  // add title parameter to download link
-  download = download + '&title=' + encodeURIComponent(filename)
+  // add title parameter to download link (for youtube)
+  if (['youtube'].indexOf(site) > -1)
+    download = download + '&title=' + encodeURIComponent(filename)
 
   return {
     preferStream: true,
@@ -430,13 +431,15 @@ const _streamSpawn = function (media, req) {
   stream.stderr
   .on('data', d => { stderr = Buffer.concat([stderr, d]) })
   .on('end', () => {
-    stderr.toString('utf8')
+    return reject(stderr.toString('utf8'))
   })
 
   // kill process on closing socket
-  req.socket.on('close', () => {
-    stream.kill()
-  })
+  if (req) {
+    req.socket.on('close', () => {
+      stream.kill()
+    })
+  }
 
   return new Promise((resolve, reject) => {
     return resolve(stream.stdout)
@@ -453,7 +456,7 @@ const _streamNative = function (media, req) {
   }
 
   // support pause-reusme downloading
-  if (req.headers.range)
+  if (req && req.headers.range)
     headers.range = req.headers.range
 
   const options = {
@@ -465,12 +468,13 @@ const _streamNative = function (media, req) {
     options.localAddress = addresses[0]
 
   const download = request(options)
-  .on('error', e => {})
 
   // kill downloader on closing socket
-  req.socket.on('close', () => {
-    download.abort()
-  })
+  if (req) {
+    req.socket.on('close', () => {
+      download.abort()
+    })
+  }
 
   return new Promise((resolve, reject) => {
     return resolve(download)
