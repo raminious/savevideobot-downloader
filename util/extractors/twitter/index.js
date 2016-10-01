@@ -14,6 +14,9 @@ _.each(tokens, (token, key) => {
   bluebird.promisifyAll(clients[key])
 })
 
+const invalidUrl = 'Invalid url.'
+const noVideo = 'The link has not any video.'
+
 exports.dump = function(url) {
 
   // remove query string
@@ -24,8 +27,14 @@ exports.dump = function(url) {
 
   return new Promise((resolve, reject) => {
 
-    if (id == null)
-      return reject({ target: 'twitter', code: 0, description: 'Twitter said: invalid url.'})
+    if (id == null) {
+      return reject({
+        target: 'twitter',
+        code: 0,
+        message: invalidUrl,
+        description: invalidUrl
+      })
+    }
 
     // round robin client
     currentClient = (currentClient + 1) % clients.length
@@ -34,14 +43,26 @@ exports.dump = function(url) {
 
       const entities = tweet.extended_entities
 
-      if (entities == null)
-        return reject({ target: 'twitter', code: 1, description: 'Twitter said: The link has not any video.'})
+      if (entities == null) {
+        return reject({
+          target: 'twitter',
+          code: 1,
+          message: noVideo,
+          description: noVideo
+        })
+      }
 
       // get video from entities
       const video = getVideo(entities.media)
 
-      if (video == null)
-        return reject({ target: 'twitter', code: 2, description: 'Twitter said: The link has not any video.'})
+      if (video == null) {
+        return reject({
+          target: 'twitter',
+          code: 2,
+          message: noVideo,
+          description: noVideo
+        })
+      }
 
       // find video link
       const download = getDownloadLink(video.video_info.variants)
@@ -63,10 +84,10 @@ exports.dump = function(url) {
         formats: {}
       })
     }, e => {
-      const error = e[0]
+      const error = e[0] || {}
       error.action = 'dump'
       error.target = 'twitter'
-      error.description = 'Twitter said: ' + error.message
+      error.description = error.message
       reject(error)
     })
   })
