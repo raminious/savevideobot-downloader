@@ -239,7 +239,7 @@ const dump = function (url) {
     return extractor.dump(url)
 
   let args = parseArguments([
-    'dump-json',
+    'dump-single-json',
     'no-warnings',
     'socket-timeout:15',
     'source-address:' + sourceAddress
@@ -268,6 +268,10 @@ const dump = function (url) {
       }
 
       stdout = JSON.parse(stdout)
+
+      if (stdout._type == 'playlist')
+        stdout = stdout.entries[0]
+
       stdout.requested_formats = []
 
       // filters
