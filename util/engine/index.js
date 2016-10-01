@@ -240,6 +240,8 @@ const dump = function (url) {
 
   let args = parseArguments([
     'dump-single-json',
+    'playlist-start:1',
+    'playlist-end:1',
     'no-warnings',
     'socket-timeout:15',
     'source-address:' + sourceAddress
