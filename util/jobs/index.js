@@ -116,6 +116,11 @@ function findById(id) {
   cronTime: '00 */5 * * * *',
   onTick: function () {
 
+    // remove completed jobs if stucks in queue
+    queue.complete((err, ids) => {
+      ids.forEach(id => removeById(id))
+    })
+
     // remove failed jobs
     queue.failed((err, ids) => {
       ids.forEach(id => removeById(id))
