@@ -15,7 +15,7 @@ _.each(tokens, (token, key) => {
 })
 
 const invalidUrl = 'Invalid url.'
-const noVideo = 'The link has not any video.'
+const noVideo = 'The link has not any video associated.'
 
 exports.dump = function(url) {
 
