@@ -3,10 +3,15 @@
 const program = require('commander')
 const downloader = require('../')
 
+// start job manager ui
+const kue = require('../util/jobs').kue
+const config = require('../config.json')
+
 // options
 program
   .option('-H, --host <host>', 'specify the host [0.0.0.0]', '0.0.0.0')
   .option('-p, --port <port>', 'specify the port [19001]', '19001')
+  .option('-J, --job <port>', 'specify job server port [19300]', '19300')
   .option('-b, --backlog <size>', 'specify the backlog size [511]', '511')
   .parse(process.argv)
 
@@ -14,4 +19,13 @@ const app = downloader()
 
 app.listen(program.port, program.host, ~~program.backlog, function () {
   console.log('[ + ] Downloader Listening on %s:%s', program.host, program.port)
+
+  const jobServerApi = require('express')()
+  jobServerApi.use(require('basic-auth-connect')('savevideobot', 'sep123$%^'))
+  jobServerApi.use(kue.app)
+
+  jobServerApi.listen(program.job, function() {
+    kue.app.set('title', 'SaveVideoBot ON ' + config.id);
+    console.log('[ + ] Job Server Started on %s', program.job )
+  })
 })
