@@ -26,18 +26,27 @@ queue
 .on('job complete', co.wrap(function* (id, result) {
 
   //find job
-  const job = yield findById(id)
+  let job
+
+  try {
+    job = yield findById(id)
+  }
+  catch(e) {
+    // job is processed by another cluster (in cluster mode this happens)
+    return false
+  }
 
   // check for TTL exceed (not done yet)
   if (job._error != null)
     return false
 
+  //remove job
+  yield removeById(id)
+
   // run post processor
   if (postProcessors[job.type])
     postProcessors[job.type](result)
 
-  //remove job
-  removeById(id)
 }))
 .on('job failed', co.wrap(function* (id, err) {
   // remove job
@@ -92,9 +101,12 @@ function processJob(name, concurrency, processor) {
  * Remove job by id
  */
 function removeById(id) {
-  findById(id).then(job => {
-    job.remove(e => e)
-  }, e => e)
+  return new Promise((resolve, reject) => {
+    findById(id).then(job => {
+      job.remove(e => reject)
+      resolve()
+    }, e => reject)
+  })
 }
 
 /*
