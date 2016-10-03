@@ -2,12 +2,11 @@ const co = require('co')
 const kue = require ('kue')
 const CronJob = require('cron').CronJob
 
-const queue = kue.createQueue({ jobEvents: false })
+const agent = require('superagent')
 
-/*
- * post processors for complete jobs
- */
-const postProcessors = {}
+const queue = kue.createQueue({
+  disableSearch: false
+})
 
 /*
  * Kue currently uses client side job state management and when redis crashes
@@ -23,39 +22,13 @@ queue.watchStuckJobs()
  * however scoped to the Queue instance to apply logic at a "global" level.
  */
 queue
-.on('job complete', co.wrap(function* (id, result) {
-
-  //find job
-  let job
-
-  try {
-    job = yield findById(id)
-  }
-  catch(e) {
-    // job is processed by another cluster (in cluster mode this happens)
-    return false
-  }
-
-  // check for TTL exceed (not done yet)
-  if (job._error != null)
-    return false
-
-  //remove job
-  yield removeById(id)
-
-  // run post processor
-  if (postProcessors[job.type])
-    postProcessors[job.type](result)
-
-}))
-.on('job failed', co.wrap(function* (id, err) {
-  // remove job
-  removeById(id)
-}))
-
-.on('error', function (err) {
-
+.on('job complete', id => {
+  kue.Job.get(id, (err, job) => {
+    if (err) return
+    job.remove(e => e)
+  })
 })
+.on('error', e => e)
 
 /**
  * Create a new job.
@@ -63,21 +36,44 @@ queue
  * @param data object params that will pass to processor
  * @param configuration object job configurations
  */
-function createJob(name, data, configurations) {
+const createJob = co.wrap(function* (name, data, configurations) {
+
+  if (configurations.singleton && data.uniqid) {
+
+    const search = yield agent
+      .get('http://127.0.0.1:19300/job/search?q=' + data.uniqid)
+      .auth('savevideobot', 'sep123$%^', { type: 'auto' })
+
+    if (search.body.length > 0) {
+      const job = yield findById(~~search.body[0])
+
+      if (['failed', 'inactive'].indexOf(job.state()) != -1)
+        job.active()
+
+      return false
+    }
+  }
 
   // merge default configurations with user configs
-  var config = Object.assign({
+  const config = Object.assign({
+    onFailed: e => e,
+    onComplete: () => {},
     priority: 'normal',
     attempts: 1,
+    searchKeys: [],
+    removeOnComplete: true
   }, configurations || {})
 
   queue.create(name, data)
-    .removeOnComplete(false)
+    .on('complete', config.onComplete)
+    .on('failed', config.onFailed)
+    .removeOnComplete(config.removeOnComplete)
     .priority(config.priority)
     .ttl(config.ttl)
     .attempts(config.attempts)
+    .searchKeys(config.searchKeys)
     .save()
-}
+})
 
 /**
  * Process a job.
@@ -124,7 +120,7 @@ function findById(id) {
 /**
  * cronjobs
  */
- new CronJob({
+new CronJob({
   cronTime: '00 */5 * * * *',
   onTick: function () {
 
@@ -145,4 +141,3 @@ exports.kue = kue
 exports.queue = queue
 exports.create = createJob
 exports.process = processJob
-exports.onDone = postProcessors
