@@ -1,4 +1,4 @@
 .DS_STORE
 downloads/
-config.json
+/config.json
 node_modules/
