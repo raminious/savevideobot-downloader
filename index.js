@@ -1,6 +1,8 @@
 const responseTime = require('koa-response-time')
 const ratelimit = require('koa-ratelimit')
 const compress = require('koa-compress')
+const auth = require('koa-basic-auth')
+const health = require('koa-ping')
 const mount = require('koa-mount')
 const koa = require('koa')
 const log = require('./log')
@@ -14,9 +16,6 @@ module.exports = function() {
 
   // x-response-time
   app.use(responseTime())
-
-  // add request id to every request
-  app.use(require('koa-request-id')())
 
   // compression
   app.use(compress())
@@ -44,6 +43,10 @@ module.exports = function() {
       this.body = e.message || ''
     }
   })
+
+  // check health of app (authentication enabled)
+  app.use(mount('/ping', auth({ name: 'savevideobot', pass: 'sep123$%^' })))
+  app.use(health())
 
   //routes
   app.use(mount(require('./lib/explore')))
