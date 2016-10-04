@@ -23,7 +23,7 @@ const config = require('../../config.json')
 */
 const extractors = {
   twitter : require('../extractors/twitter'),
-  google  : require('../extractors/google')
+  //google  : require('../extractors/google')
 }
 
 const WORKER_NATIVE = 'native'
