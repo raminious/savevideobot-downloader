@@ -169,10 +169,7 @@ new CronJob({
     queue.inactive((err, ids) => {
       ids.forEach(id => {
         findById(id).then(job => {
-          // update job to active, if inactivated for 2minutes (=120,000ms)
-          if (job.updated_at == null || (~~job.created_at - ~~job.updated_at) > 120000) {
-            job.active()
-          }
+          job.active()
         }, e => e)
       })
     })
