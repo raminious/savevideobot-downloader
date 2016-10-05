@@ -102,7 +102,7 @@ const getMedia = function* (id, format) {
     media = yield cache.get(key)
     media = JSON.parse(media)
 
-    if (media == null) {
+    if (media == null || media.status != 'ready') {
       // get media from api server
       media = yield Media.status(id)
 
