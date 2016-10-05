@@ -21,7 +21,7 @@ app.listen(program.port, program.host, ~~program.backlog, function () {
   console.log('[ + ] Downloader Listening on %s:%s', program.host, program.port)
 
   const jobServerApi = require('express')()
-  jobServerApi.use(require('basic-auth-connect')('savevideobot', 'sep123$%^'))
+  jobServerApi.use(require('basic-auth-connect')(config.auth.username, config.auth.password))
   jobServerApi.use(kue.app)
 
   jobServerApi.listen(program.job, function() {

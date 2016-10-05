@@ -6,6 +6,7 @@ const health = require('koa-ping')
 const mount = require('koa-mount')
 const koa = require('koa')
 const log = require('./log')
+const config = require('./config.json')
 
 module.exports = function() {
 
@@ -45,7 +46,7 @@ module.exports = function() {
   })
 
   // check health of app (authentication enabled)
-  app.use(mount('/ping', auth({ name: 'savevideobot', pass: 'sep123$%^' })))
+  app.use(mount('/ping', auth({ name: config.auth.username, pass: config.auth.password })))
   app.use(health())
 
   //routes

@@ -5,6 +5,8 @@ const CronJob = require('cron').CronJob
 const agent = require('superagent')
 require('superagent-retry')(agent)
 
+const config = require('../../config.json')
+
 const queue = kue.createQueue({
   disableSearch: false
 })
@@ -43,7 +45,7 @@ const createJob = co.wrap(function* (name, data, configurations) {
 
     const search = yield agent
       .get('http://127.0.0.1:19300/job/search?q=' + data.uniqid)
-      .auth('savevideobot', 'sep123$%^', { type: 'auto' })
+      .auth(config.auth.username, config.auth.password, { type: 'auto' })
 
     if (search.body.length > 0) {
       const job = yield findById(~~search.body[0])
