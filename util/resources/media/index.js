@@ -33,7 +33,7 @@ media.update = function(id, attrs) {
 		.post(config.api + '/media/update/' + id)
 		.set({'access-token': access_token})
 		.send(attrs)
-		.retry(2)
+		.retry(3)
 		.end((err, res) => {
 			if (err) return reject(err)
 			return resolve(res)
