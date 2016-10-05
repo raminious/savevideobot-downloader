@@ -10,7 +10,7 @@ const date = moment()
 
 function GC() {
 
-  const expire = ~~config.gc.expire / 3600
+  const expire = 4 // 4hours
   const path = config.basepath + date.format('Y') + '/'
   const month = ~~date.format('M')
   const day = ~~date.format('D')
