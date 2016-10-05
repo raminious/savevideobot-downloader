@@ -2,7 +2,12 @@
 
 const _ = require('underscore')
 const config = require('../../../config.json')
-const words = config.download.restrict.words
+
+const words = [
+  "porn", "sex", "xxx", "xnxx", "xhamster", "adult", "threesome", "3some",
+  "dick", "hot girl", "hot blonde", "boob", "blowjob", "pussy", "milf", "penis",
+  "xtube", "redtube", "lesbian", "orgasm", "naked"
+]
 
 module.exports = function (site, title, url) {
 
