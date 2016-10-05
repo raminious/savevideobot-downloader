@@ -3,6 +3,7 @@ const kue = require ('kue')
 const CronJob = require('cron').CronJob
 
 const agent = require('superagent')
+require('superagent-retry')(agent)
 
 const queue = kue.createQueue({
   disableSearch: false
@@ -118,7 +119,7 @@ function findById(id) {
 }
 
 /**
- * cronjobs
+ * crontab for job maintainance
  */
 new CronJob({
   cronTime: '00 */5 * * * *',
@@ -131,7 +132,49 @@ new CronJob({
 
     // remove failed jobs
     queue.failed((err, ids) => {
-      ids.forEach(id => removeById(id))
+      ids.forEach(id => {
+
+        findById(id).then(job => {
+          console.log(job.error(), job.type)
+          if (job.error() == 'TTL exceeded') {
+
+            let message
+
+            if (job.type == 'send_job') {
+              message =  [
+                'Can not send your requested media file, because target server not responsed.',
+                'You can download file by yourself via this link:\n',
+                '[' + job.data.media.filename + '](' + job.data.media.download + ')'
+              ].join('\n')
+            }
+
+            if (job.type == 'dump_job') {
+              message = 'Can not get media info of requested url, please try again.'
+            }
+
+            agent
+              .post(job.data.callback.url)
+              .send({ id: job.data.callback.id })
+              .send({ error: { message } })
+              .retry(2)
+              .end((err, res) => {})
+          }
+
+          removeById(id)
+        })
+      })
+    })
+
+    // reactive stuck jobs
+    queue.inactive((err, ids) => {
+      ids.forEach(id => {
+        findById(id).then(job => {
+          // update job to active, if inactivated for 2minutes (=120,000ms)
+          if (job.updated_at == null || (~~job.created_at - ~~job.updated_at) > 120000) {
+            job.active()
+          }
+        }, e => e)
+      })
     })
   },
   start: true
