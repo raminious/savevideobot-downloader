@@ -1,13 +1,12 @@
 'use strict'
 
-const config = require('./config.json')
 const agent = require('superagent')
 
 module.exports = function (level, message, info) {
 
   agent
-  .post(config.log.url)
-  .auth(config.log.auth.username, config.log.auth.password, { type: 'auto' })
+  .post('http://log.savevideobot.com/store/')
+  .auth('ramin', '@1ir3z4', { type: 'auto' })
   .send({
     level,
     short_message: message,
