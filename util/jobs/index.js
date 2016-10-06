@@ -176,7 +176,7 @@ new CronJob({
       })
     })
   },
-  start: true
+  start: process.env.pm_id? (process.env.pm_id == 0? true: false): true
 })
 
 exports.kue = kue
