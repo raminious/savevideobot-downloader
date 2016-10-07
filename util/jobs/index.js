@@ -124,7 +124,7 @@ function findById(id) {
  * crontab for job maintainance
  */
 new CronJob({
-  cronTime: '00 */5 * * * *',
+  cronTime: '00 */3 * * * *',
   onTick: function () {
 
     // remove completed jobs if stucks in queue
