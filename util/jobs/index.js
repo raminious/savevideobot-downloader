@@ -5,6 +5,8 @@ const CronJob = require('cron').CronJob
 const agent = require('superagent')
 require('superagent-retry')(agent)
 
+const log = require('../../log')
+
 const auth = require('../../config.json').auth
 
 const queue = kue.createQueue({
@@ -137,27 +139,40 @@ new CronJob({
       ids.forEach(id => {
 
         findById(id).then(job => {
-          console.log(job.error(), job.type)
+
           if (job.error() == 'TTL exceeded') {
 
-            let message
+            const error = {}
 
             if (job.type == 'send_job') {
-              message =  [
+
+              let media = job.data.media
+
+              error.type = 'send_ttl_exceed'
+              error.message =  [
                 'Can not send your requested media file, because target server not responsed.',
                 'You can download file by yourself via this link:\n',
-                '[' + job.data.media.filename + '](' + job.data.media.download + ')'
+                '[' + media.filename + '](' + media.stream.replace('/stream/', '/download/') + ')'
               ].join('\n')
+
+              log('warning', 'ytdl_send_ttl_exceed', {
+                id: media.id,
+                site: media.site,
+                url: media.url,
+                format: media.format
+              })
             }
 
             if (job.type == 'dump_job') {
-              message = 'Can not get media info of requested url, please try again.'
+              error.type = 'dump_ttl_exceed'
+              error.message = 'Can not get media info of requested url, please try again.'
+              log('warning', 'ytdl_dump_ttl_exceed', { id: job.data.id, url: job.data.url })
             }
 
             agent
               .post(job.data.callback.url)
               .send({ id: job.data.callback.id })
-              .send({ error: { message } })
+              .send({ error })
               .retry(2)
               .end((err, res) => {})
           }
