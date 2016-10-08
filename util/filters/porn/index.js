@@ -4,9 +4,9 @@ const _ = require('underscore')
 const config = require('../../../config.json')
 
 const words = [
-  "porn", "sex", "xxx", "xnxx", "xhamster", "adult", "threesome", "3some",
+  "porn", "sex", "xxx", "xnxx", "xhamster", "xvideos" , "threesome", "3some",
   "dick", "hot girl", "hot blonde", "boob", "blowjob", "pussy", "milf", "penis",
-  "xtube", "redtube", "lesbian", "orgasm", "naked"
+  "xtube", "redtube", "lesbian", "orgasm", "adult"
 ]
 
 module.exports = function (site, title, url) {
