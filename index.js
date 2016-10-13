@@ -1,5 +1,6 @@
+'use strict'
+
 const responseTime = require('koa-response-time')
-const ratelimit = require('koa-ratelimit')
 const compress = require('koa-compress')
 const auth = require('koa-basic-auth')
 const health = require('koa-ping')
@@ -50,10 +51,10 @@ module.exports = function() {
   app.use(health())
 
   //routes
-  app.use(mount(require('./lib/explore')))
-  app.use(mount(require('./lib/send')))
-  app.use(mount(require('./lib/stream')))
-  app.use(mount(require('./lib/download')))
+  app.use(mount(require('./api/explore')))
+  app.use(mount(require('./api/send')))
+  app.use(mount(require('./api/stream')))
+  app.use(mount(require('./api/download')))
 
   return app
 }

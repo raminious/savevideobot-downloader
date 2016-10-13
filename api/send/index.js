@@ -2,10 +2,10 @@
 
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
-const jobs = require('../../util/jobs')
+const jobs = require('../../lib/jobs')
 const bytes = require('bytes')
 const co = require('co')
-const engine = require('../../util/engine')
+const engine = require('../../lib/engine')
 const config = require('../../config.json')
 
 const agent = require('superagent')

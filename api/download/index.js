@@ -4,7 +4,7 @@ const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
 const pug = require('pug')
 const bytes = require('bytes')
-const engine = require('../../util/engine')
+const engine = require('../../lib/engine')
 const config = require('../../config.json')
 
 // pre-render view

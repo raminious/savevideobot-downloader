@@ -4,7 +4,7 @@ const program = require('commander')
 const downloader = require('../')
 
 // start job manager ui
-const kue = require('../util/jobs').kue
+const kue = require('../lib/jobs').kue
 const config = require('../config.json')
 
 // options

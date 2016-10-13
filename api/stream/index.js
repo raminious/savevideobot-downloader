@@ -2,15 +2,37 @@
 
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
+const koa = require('koa')
+const uuid = require('uuid')
+const redis = require('redis')
 const PassThrough = require('stream').PassThrough
+const ratelimit = require('koa-ratelimit')
 const bytes = require('bytes')
-const engine = require('../../util/engine')
+const engine = require('../../lib/engine')
 const config = require('../../config.json')
 
 const workers = ['native', 'spawn']
 
 // get download max size
 const maxSize = bytes.parse(config.download.maxSize)
+
+const app = koa()
+
+// apply rate limit
+app.use(ratelimit({
+  db: redis.createClient(),
+  duration: 60000,
+  max: 3,
+  id: function (context) {
+    // do not ratelimit localhost requests
+    return context.ip == '127.0.0.1'? uuid.v1(): context.ip
+  },
+  headers: {
+    remaining: 'Rate-Limit-Remaining',
+    reset: 'Rate-Limit-Reset',
+    total: 'Rate-Limit-Total'
+  }
+}))
 
 router.get('/stream/:id/:format?/:worker?', bodyParser(), function* () {
 
@@ -66,4 +88,4 @@ router.get('/stream/:id/:format?/:worker?', bodyParser(), function* () {
   this.body = stream.pipe(PassThrough())
 })
 
-module.exports = require('koa')().use(router.routes())
+module.exports = app.use(router.routes())

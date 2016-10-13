@@ -2,8 +2,8 @@
 
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
-const jobs = require('../../util/jobs')
-const Media = require('../../util/resources/media')
+const jobs = require('../../lib/jobs')
+const Media = require('../../lib/resources/media')
 
 const agent = require('superagent')
 require('superagent-retry')(agent)

@@ -1,6 +1,6 @@
 'use strict'
 
-const engine = require('../../../util/engine')
+const engine = require('../../../lib/engine')
 const config = require('../../../config.json')
 
 // webhooks
