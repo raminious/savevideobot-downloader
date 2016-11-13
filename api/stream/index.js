@@ -2,11 +2,10 @@
 
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
-const koa = require('koa')
-const uuid = require('uuid')
-const redis = require('redis')
-const PassThrough = require('stream').PassThrough
 const ratelimit = require('koa-ratelimit')
+const koa = require('koa')
+const redis = require('../../lib/redis')
+const PassThrough = require('stream').PassThrough
 const bytes = require('bytes')
 const engine = require('../../lib/engine')
 const config = require('../../config.json')
@@ -20,12 +19,12 @@ const app = koa()
 
 // apply rate limit
 app.use(ratelimit({
-  db: redis.createClient(),
+  db: redis,
   duration: 60000,
-  max: 3,
+  max: 5,
   id: function (context) {
     // do not ratelimit localhost requests
-    return context.ip == '127.0.0.1'? uuid.v1(): context.ip
+    return context.ip == '127.0.0.1'? context.request.url: context.ip
   },
   headers: {
     remaining: 'Rate-Limit-Remaining',
