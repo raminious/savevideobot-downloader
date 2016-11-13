@@ -52,6 +52,7 @@ module.exports = function() {
 
   //routes
   app.use(mount(require('./api/explore')))
+  app.use(mount(require('./api/thumbnail')))
   app.use(mount(require('./api/send')))
   app.use(mount(require('./api/stream')))
   app.use(mount(require('./api/download')))
