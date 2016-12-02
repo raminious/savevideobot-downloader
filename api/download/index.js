@@ -37,9 +37,13 @@ router.get('/download/:id/:format?/:type?', bodyParser(), function* () {
   if (type == 'stream')
     return this.redirect(media.stream)
 
-  if (media.size > maxSize) {
-    media.stream = "javascript:alert('You are not allowed to download files larger than " + config.download.maxSize +
-      ". \nUse direct download link instead.')"
+  // if (media.size > maxSize) {
+  //   media.stream = "javascript:alert('You are not allowed to download files larger than " + config.download.maxSize +
+  //     ". \nUse direct download link instead.')"
+  // }
+
+  if (media.size > 0) {
+    media.stream = "javascript:alert('Mirror downloading is not available at this time.')"
   }
 
   // convert media size to human readable
