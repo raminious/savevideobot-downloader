@@ -1,0 +1,12 @@
+{
+  "name"        : "svb-dl",
+  "script"      : "bin/downloader",
+  "node_args"   : ["--expose-gc"],
+  "instances"   : 2,
+  "exec_mode"   : "cluster",
+  "watch"       : false,
+  "merge_logs"  : true,
+  "env"         : {
+    "NODE_ENV"  : "production"
+  }
+}
