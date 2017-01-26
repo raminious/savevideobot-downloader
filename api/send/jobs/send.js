@@ -1,5 +1,6 @@
 'use strict'
 
+const co = require('co')
 const engine = require('../../../lib/engine')
 const config = require('../../../config.json')
 
@@ -9,7 +10,7 @@ const hooks = {
 }
 
 // processor for downloading media
-module.exports = function* (job) {
+module.exports = co.wrap(function* (job) {
 
   const worker = config.download.defaultWorker
   const webhook = job.data.webhook
@@ -36,4 +37,4 @@ module.exports = function* (job) {
 
     return { webhook, callback, media, error }
   }
-}
+})

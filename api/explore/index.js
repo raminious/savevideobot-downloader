@@ -2,14 +2,11 @@
 
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
-const jobs = require('../../lib/jobs')
-const Media = require('../../lib/resources/media')
-
 const agent = require('superagent')
 require('superagent-retry')(agent)
-
-// constants
-const DUMP_JOB = 'dump_job'
+const log = require('../../log')
+const Q = require('../../lib/jobs')
+const Media = require('../../lib/resources/media')
 
 router.post('/explore', bodyParser(), function* () {
 
@@ -24,58 +21,61 @@ router.post('/explore', bodyParser(), function* () {
   // callback is optional
   const callback = this.request.body.callback
 
-  // create new job for dumping url
-  jobs.create(DUMP_JOB, {
-    title: 'dumping ' + url,
+  Q.jobs[Q.DUMP_JOB].add({
+    title: '[ dump ] ' + url,
     id,
     url,
     callback
   }, {
     attempts: 2,
-    ttl: 45 * 1000, //45sec
-    priority: 'high',
-    onComplete: (data) => {
-      const id = data.id
-      const callback = data.callback
-      const error = data.error
-      const media = data.media
-
-      // log error
-      if (error) {
-        this.log('warning', error.type || error.message, {
-          target: error.target,
-          action: error.action,
-          task: 'media/explore',
-          url: url,
-          description: error.description,
-          source_address: error.source_address
-        })
-      }
-
-      // update media
-      const attributes = error? { status: 'failed', note: error.message }: media
-      Media.update(id, attributes)
-      .then(res => {
-
-        if (callback == null)
-          return false
-
-        // callback
-        agent
-          .post(callback.url)
-          .send({ id: callback.id })
-          .send({ media: media? Object.assign(media, {id}): undefined })
-          .send({ error })
-          .end((err, res) => {})
-
-      }, e => e)
-    }
+    timeout: 45 * 1000,
+    removeOnComplete: true
   })
 
   this.body = {}
 })
 
+Q.jobs[Q.DUMP_JOB]
+.on('completed', function (job, result) {
+
+  const id = result.id
+  const url = result.url
+  const callback = result.callback
+  const error = result.error
+  const media = result.media
+
+  // log error
+  if (error) {
+    log('warning', error.type || error.message, {
+      target: error.target,
+      action: error.action,
+      task: 'media/explore',
+      url: url,
+      description: error.description,
+      source_address: error.source_address
+    })
+  }
+
+  // update media
+  const attributes = error? { status: 'failed', note: error.message }: media
+  Media.update(id, attributes)
+  .then(res => {
+
+    if (callback == null)
+      return false
+
+    // callback
+    agent
+      .post(callback.url)
+      .send({ id: callback.id })
+      .send({ media: media? Object.assign(media, {id}): undefined })
+      .send({ error })
+      .end((err, res) => {})
+
+  }, e => e)
+})
+
 // declare dump job processor
-jobs.process(DUMP_JOB, 4, require('./jobs/dump'))
+Q.jobs[Q.DUMP_JOB].process(4, require('./jobs/dump'))
 
 module.exports = require('koa')().use(router.routes())

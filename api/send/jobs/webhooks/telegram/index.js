@@ -35,7 +35,7 @@ module.exports = function* (job, media, webhook) {
   */
 
   // log media size
-  job.log('start sending. filesize: %s', bytes(media.size))
+  // job.log('start sending. filesize: %s', bytes(media.size))
 
   if (media.size > maxTelegramSize) {
 
@@ -128,7 +128,7 @@ function* _sendMirror (job, botUrl, media, chat_id, source) {
     sendType = yield getSendType(media.extension)
     source = {
       value: request({ url: source }).on('end', () => {
-        job.log('media request stream is done')
+        // job.log('media request stream is done')
         job.progress(50, 100)
         _action(botUrl, chat_id, sendType)
       }),
