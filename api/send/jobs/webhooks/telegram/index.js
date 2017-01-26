@@ -92,11 +92,11 @@ function* send(job, botUrl, media, chat_id, source) {
 
   let response
 
-  // response = yield _sendDirect(botUrl, media, chat_id)
+  response = yield _sendDirect(botUrl, media, chat_id)
 
-  // // fallback with mirror send on telegram direct sucks
-  // if (response.body && response.body.ok == false && response.body.error_code == 400)
-  response = yield _sendMirror(job, botUrl, media, chat_id, source)
+  // fallback with mirror send on telegram direct sucks
+  if (response.body && response.body.ok == false && response.body.error_code == 400)
+    response = yield _sendMirror(job, botUrl, media, chat_id, source)
 
   // if telegram server timeout
   if (response.body == null || response.body.result == null)
@@ -175,18 +175,27 @@ function* _sendDirect (botUrl, media, chat_id) {
 
   _action(botUrl, chat_id, sendType)
 
-  const response = yield request
+  try {
+    return yield request
     .postAsync({
       url: botUrl + '/send' + sendType,
       json: true,
+      timeout: 7000,
       formData: {
         chat_id: chat_id,
         caption: media.title.substr(0, 200),
         [sendType.toLowerCase()]: media.download
       }
     })
-
-  return response
+  }
+  catch(e) {
+    return {
+      body: {
+        ok: false,
+        error_code: 400
+      }
+    }
+  }
 }
 
 /**
