@@ -35,7 +35,7 @@ module.exports = function* (job, media, webhook) {
   */
 
   // log media size
-  job.log('start sending. filesize: %s', bytes(media.size))
+  // job.log('start sending. filesize: %s', bytes(media.size))
 
   if (media.size > maxTelegramSize) {
 
@@ -92,11 +92,11 @@ function* send(job, botUrl, media, chat_id, source) {
 
   let response
 
-  response = yield _sendDirect(botUrl, media, chat_id)
+  // response = yield _sendDirect(botUrl, media, chat_id)
 
-  // fallback with mirror send on telegram direct sucks
-  if (response.body && response.body.ok == false && response.body.error_code == 400)
-    response = yield _sendMirror(job, botUrl, media, chat_id, source)
+  // // fallback with mirror send on telegram direct sucks
+  // if (response.body && response.body.ok == false && response.body.error_code == 400)
+  response = yield _sendMirror(job, botUrl, media, chat_id, source)
 
   // if telegram server timeout
   if (response.body == null || response.body.result == null)
@@ -128,7 +128,7 @@ function* _sendMirror (job, botUrl, media, chat_id, source) {
     sendType = yield getSendType(media.extension)
     source = {
       value: request({ url: source }).on('end', () => {
-        job.log('media request stream is done')
+        // job.log('media request stream is done')
         job.progress(50, 100)
         _action(botUrl, chat_id, sendType)
       }),
