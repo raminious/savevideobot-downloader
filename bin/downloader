@@ -4,9 +4,11 @@ const program = require('commander')
 const downloader = require('../')
 
 // start job manager ui
-const kue = require('../lib/jobs').kue
+// const bully = require('../../bully')
+//const kue = require('../lib/jobs').kue
 const config = require('../config.json')
 
+// console.log(bully)
 // options
 program
   .option('-H, --host <host>', 'specify the host [0.0.0.0]', '0.0.0.0')
@@ -20,12 +22,11 @@ const app = downloader()
 app.listen(program.port, program.host, ~~program.backlog, function () {
   console.log('[ + ] Downloader Listening on %s:%s', program.host, program.port)
 
-  const jobServerApi = require('express')()
-  jobServerApi.use(require('basic-auth-connect')(config.auth.username, config.auth.password))
-  jobServerApi.use(kue.app)
+  // const jobServerApi = require('express')()
+  // jobServerApi.use(bully.callback())
+  // jobServerApi.use(require('basic-auth-connect')(config.auth.username, config.auth.password))
 
-  jobServerApi.listen(program.job, function() {
-    kue.app.set('title', 'SaveVideoBot ON ' + config.id);
-    console.log('[ + ] Job Server Started on %s', program.job )
-  })
+  // jobServerApi.listen(program.job, function() {
+  //   console.log('[ + ] Job Server Started on %s', program.job )
+  // })
 })

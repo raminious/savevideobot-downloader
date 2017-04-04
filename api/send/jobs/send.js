@@ -1,5 +1,3 @@
-'use strict'
-
 const engine = require('../../../lib/engine')
 const config = require('../../../config.json')
 
@@ -9,7 +7,7 @@ const hooks = {
 }
 
 // processor for downloading media
-module.exports = function* (job) {
+module.exports = async function (job) {
 
   const worker = config.download.defaultWorker
   const webhook = job.data.webhook
@@ -17,7 +15,7 @@ module.exports = function* (job) {
   const callback = job.data.callback
 
   try {
-    const response = yield hooks[webhook.type](job, media, webhook)
+    const response = await hooks[webhook.type](job, media, webhook)
 
     // assign primary fields
     response.media_id = media.id

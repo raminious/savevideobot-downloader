@@ -1,9 +1,6 @@
-'use strict'
-
 const responseTime = require('koa-response-time')
 const compress = require('koa-compress')
 const auth = require('koa-basic-auth')
-const health = require('koa-ping')
 const mount = require('koa-mount')
 const koa = require('koa')
 const log = require('./log')
@@ -11,7 +8,7 @@ const config = require('./config.json')
 
 module.exports = function() {
 
-  const app = koa()
+  const app = new koa()
 
   // trust proxy
   app.proxy = true
@@ -23,15 +20,15 @@ module.exports = function() {
   app.use(compress())
 
   // define logger
-  app.use(function* (next) {
-    this.log = log
-    yield* next
+  app.use(async function (ctx, next) {
+    ctx.log = log
+    await next()
   })
 
   // handle application errors
-  app.use(function* (next) {
+  app.use(async function (ctx, next) {
     try {
-      yield next
+      await next()
     } catch(e) {
 
       if (process.env.NODE_ENV != 'production')
@@ -39,23 +36,20 @@ module.exports = function() {
 
       // check application fatal errors
       if (e instanceof TypeError || e instanceof ReferenceError)
-        return this.log('fatal', 'downloader_bug', { description: e.message, stack: e.stack })
+        return ctx.log('fatal', 'downloader_bug', { description: e.message, stack: e.stack })
 
-      this.status = e.status || 500
-      this.body = e.message || ''
+      ctx.status = e.status || 500
+      ctx.body = e.message || ''
     }
   })
 
-  // check health of app (authentication enabled)
-  app.use(mount('/ping', auth({ name: config.auth.username, pass: config.auth.password })))
-  app.use(health())
-
   //routes
+  app.use(mount(require('./api/stats')))
   app.use(mount(require('./api/explore')))
-  app.use(mount(require('./api/thumbnail')))
   app.use(mount(require('./api/send')))
-  app.use(mount(require('./api/stream')))
   app.use(mount(require('./api/download')))
+  app.use(mount(require('./api/thumbnail')))
+  app.use(mount(require('./api/stream')))
 
   return app
 }

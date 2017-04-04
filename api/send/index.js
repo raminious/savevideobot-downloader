@@ -1,38 +1,36 @@
-'use strict'
-
+const koa = require('koa')
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
-const jobs = require('../../lib/jobs')
+const agent = require('superagent')
 const bytes = require('bytes')
-const co = require('co')
+const Q = require('../../lib/jobs')
+const log = require('../../log')
 const engine = require('../../lib/engine')
 const config = require('../../config.json')
 
-const agent = require('superagent')
-require('superagent-retry')(agent)
+const app = new koa()
 
 // constants
-const SEND_JOB = 'send_job'
 const maxSize = bytes.parse(config.download.maxSize)
 
-router.post('/send', bodyParser(), function* () {
+router.post('/send', bodyParser(), async function (ctx) {
 
-  this.assert(this.is('json'), 415, 'content type should be json')
+  ctx.assert(ctx.is('json'), 415, 'content type should be json')
 
-  const id = this.request.body.id
-  const format = this.request.body.format || 'best'
-  const webhook = this.request.body.webhook
-  const callback = this.request.body.callback
+  const id = ctx.request.body.id
+  const format = ctx.request.body.format || 'best'
+  const webhook = ctx.request.body.webhook
+  const callback = ctx.request.body.callback
 
   // get media
   let media
 
   try {
-    media = yield engine.getMedia(id, format)
+    media = await engine.getMedia(id, format)
   }
   catch(e) {
 
-    this.log('fatal', 'download_fail', {
+    ctx.log('fatal', 'download_fail', {
       type: e.type,
       stack: e.stack,
       target: 'downloader',
@@ -42,12 +40,12 @@ router.post('/send', bodyParser(), function* () {
       format: format
     })
 
-    this.assert(e == null, 406, e.message)
+    ctx.assert(e == null, 406, e.message)
   }
 
   // log large file requests
   if (media.size > maxSize) {
-    this.log('info', 'max_size', {
+    ctx.log('info', 'max_size', {
       target: 'downloader',
       task: 'media/download',
       site: media.site,
@@ -55,51 +53,82 @@ router.post('/send', bodyParser(), function* () {
     })
   }
 
-  jobs.create(SEND_JOB, {
-    title: 'sending ' + media.title.substr(0, 50),
-    uniqid: SEND_JOB + '_' + media.id + '_' + media.format,
+  Q.jobs[Q.SEND_JOB].add({
+    title: '[ SEND ] ' + media.title.substr(0, 50),
     media,
     webhook,
     callback
   }, {
-    singleton: true,
     attempts: 1,
-    ttl: 3.5 * 60 * 1000, //3.5 minutes
-    searchKeys: ['uniqid'],
-    onComplete: (data) => {
-
-      const response = data.response
-      const error = data.error
-      const callback = data.callback
-      const webhook = data.webhook
-
-      // callback
-      agent
-        .post(callback.url)
-        .send({ id: callback.id })
-        .send({ response })
-        .send({ error })
-        .retry(2)
-        .end((err, res) => {})
-
-      // log error on log server
-      if (error) {
-        this.log('fatal', 'ytdl_sucks', {
-          target: 'downloader',
-          task: 'media/download',
-          description: error.description,
-          stack: error.stack
-        })
-      }
-    }
-
+    timeout: 3.5 * 60 * 1000,
+    removeOnComplete: true
   })
 
-  this.body = {}
+  ctx.body = {}
 })
 
+Q.jobs[Q.SEND_JOB]
+.on('completed', function (job, result) {
+
+  const response = result.response
+  const error = result.error
+  const callback = result.callback
+  const webhook = result.webhook
+
+  // callback
+  agent
+    .post(callback.url)
+    .send({ id: callback.id })
+    .send({ response })
+    .send({ error })
+    .retry(2)
+    .end((err, res) => {})
+
+  // log error on log server
+  if (error) {
+    log('fatal', 'ytdl_sucks', {
+      target: 'downloader',
+      task: 'media/download',
+      description: error.description,
+      stack: error.stack
+    })
+  }
+})
+.on('failed', function(job, err) {
+
+  const {attempts, attemptsMade} = job
+
+  if (attempts !== attemptsMade)
+    return false
+
+  let media = job.data.media
+
+  const error = {}
+  error.type = 'ytdl_send_error'
+  error.description = err.message
+  error.message =  [
+    'Can not send your requested media file, because target server not responsed.',
+    'You can download file by yourself via this link:\n',
+    '[' + media.filename + '](' + media.stream.replace('/stream/', '/download/') + ')'
+  ].join('\n')
+
+  log('warning', error.type, {
+    id: media.id,
+    site: media.site,
+    url: media.url,
+    format: media.format,
+    desc: error.description
+  })
+
+  agent
+  .post(job.data.callback.url)
+  .send({ id: job.data.callback.id })
+  .send({ error })
+  .retry(2)
+  .end((err, res) => {})
+})
 
 // declare job processors
-jobs.process(SEND_JOB, 4, require('./jobs/send'))
+Q.jobs[Q.SEND_JOB].process(4, require('./jobs/send'))
 
-module.exports = require('koa')().use(router.routes())
+module.exports = app.use(router.routes())
