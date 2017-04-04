@@ -60,7 +60,7 @@ router.post('/send', bodyParser(), async function (ctx) {
     callback
   }, {
     attempts: 1,
-    timeout: 3.5 * 60 * 1000,
+    timeout: 2 * 60 * 1000,
     removeOnComplete: true
   })
 
