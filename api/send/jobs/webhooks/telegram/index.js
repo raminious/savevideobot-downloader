@@ -174,7 +174,7 @@ async function _sendDirect (botUrl, media, chat_id) {
   _action(botUrl, chat_id, sendType)
 
   try {
-    const response = await request
+    return await request
     .postAsync({
       url: botUrl + '/send' + sendType,
       json: true,
