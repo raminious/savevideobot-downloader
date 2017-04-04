@@ -1,4 +1,5 @@
 .DS_STORE
+*.log
 downloads/
 /config.json
 node_modules/

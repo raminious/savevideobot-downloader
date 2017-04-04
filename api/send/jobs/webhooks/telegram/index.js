@@ -61,7 +61,7 @@ module.exports = async function (job, media, webhook) {
   // download file on disk and then send to client
   if (media.preferStream == false) {
     source = await engine.save(media, worker)
-    job.progress(50, 100)
+    job.progress(50)
   }
 
   // send file to client
@@ -125,9 +125,9 @@ async function _sendMirror (job, botUrl, media, chat_id, source) {
 
     sendType = await getSendType(media.extension)
     source = {
-      value: request({ url: source }).on('end', () => {
+      value: request({ url: source, timeout: 20*1000 }).on('end', () => {
         // job.log('media request stream is done')
-        job.progress(50, 100)
+        job.progress(50)
         _action(botUrl, chat_id, sendType)
       }),
       options: {

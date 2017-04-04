@@ -29,7 +29,6 @@ router.post('/send', bodyParser(), async function (ctx) {
     media = await engine.getMedia(id, format)
   }
   catch(e) {
-
     ctx.log('fatal', 'download_fail', {
       type: e.type,
       stack: e.stack,
@@ -60,7 +59,7 @@ router.post('/send', bodyParser(), async function (ctx) {
     callback
   }, {
     attempts: 1,
-    timeout: 2 * 60 * 1000,
+    timeout: 3 * 60 * 1000,
     removeOnComplete: true
   })
 
@@ -95,7 +94,6 @@ Q.jobs[Q.SEND_JOB]
   }
 })
 .on('failed', function(job, err) {
-
   const {attempts, attemptsMade} = job
 
   if (attempts !== attemptsMade)
