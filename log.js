@@ -1,5 +1,3 @@
-'use strict'
-
 const agent = require('superagent')
 
 module.exports = function (level, message, info) {

@@ -1,5 +1,4 @@
-'use strict'
-
+const koa = require('koa')
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
 const pug = require('pug')
@@ -7,35 +6,37 @@ const bytes = require('bytes')
 const engine = require('../../lib/engine')
 const config = require('../../config.json')
 
+const app = new koa()
+
 // pre-render view
 const render = pug.compileFile(__dirname + '/view.pug')
 
 // get download max size
 const maxSize = bytes.parse(config.download.maxSize)
 
-router.get('/download/:id/:format?/:type?', bodyParser(), function* () {
+router.get('/download/:id/:format?/:type?', bodyParser(), async function (ctx, next) {
 
-	const id = this.params.id
-  const format = this.params.format || 'best'
-  const type = this.params.type
+	const id = ctx.params.id
+  const format = ctx.params.format || 'best'
+  const type = ctx.params.type
 
-  this.assert(/^[0-9a-fA-F]{24}$/.test(id), 400, 'Invalid media id')
+  ctx.assert(/^[0-9a-fA-F]{24}$/.test(id), 400, 'Invalid media id')
 
   // get media object
   let media
 
   try {
-    media = yield engine.getMedia(id, format)
+    media = await engine.getMedia(id, format)
   }
   catch (e) {
-    this.assert(e == null, 400, e.message)
+    ctx.assert(e == null, 400, e.message)
   }
 
   if (type == 'direct')
-    return this.redirect(media.download)
+    return ctx.redirect(media.download)
 
   if (type == 'stream')
-    return this.redirect(media.stream)
+    return ctx.redirect(media.stream)
 
   // if (media.size > maxSize) {
   //   media.stream = "javascript:alert('You are not allowed to download files larger than " + config.download.maxSize +
@@ -49,7 +50,7 @@ router.get('/download/:id/:format?/:type?', bodyParser(), function* () {
   // convert media size to human readable
   media.size = bytes(media.size)
 
-  this.body = render({ media })
+  ctx.body = render({ media })
 })
 
-module.exports = require('koa')().use(router.routes())
+module.exports = app.use(router.routes())

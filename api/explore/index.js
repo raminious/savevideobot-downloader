@@ -1,25 +1,25 @@
-'use strict'
-
+const koa = require('koa')
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
 const agent = require('superagent')
-require('superagent-retry')(agent)
 const log = require('../../log')
 const Q = require('../../lib/jobs')
 const Media = require('../../lib/resources/media')
 
-router.post('/explore', bodyParser(), function* () {
+const app = new koa()
 
-  this.assert(this.is('json'), 415, 'content type should be json')
+router.post('/explore', bodyParser(), async function (ctx) {
 
-  const id = this.request.body.id
-  this.assert(id != null, 400, 'Id is required')
+  ctx.assert(ctx.is('json'), 415, 'content type should be json')
 
-  const url = this.request.body.url
-  this.assert(url != null, 400, 'Url is required')
+  const id = ctx.request.body.id
+  ctx.assert(id != null, 400, 'Id is required')
+
+  const url = ctx.request.body.url
+  ctx.assert(url != null, 400, 'Url is required')
 
   // callback is optional
-  const callback = this.request.body.callback
+  const callback = ctx.request.body.callback
 
   Q.jobs[Q.DUMP_JOB].add({
     title: '[ dump ] ' + url,
@@ -28,16 +28,16 @@ router.post('/explore', bodyParser(), function* () {
     callback
   }, {
     attempts: 2,
-    timeout: 45 * 1000,
-    removeOnComplete: true
+    timeout: 30 * 1000,
+    removeOnComplete: true,
+    removeOnFail: true
   })
 
-  this.body = {}
+  ctx.body = {}
 })
 
 Q.jobs[Q.DUMP_JOB]
 .on('completed', function (job, result) {
-
   const id = result.id
   const url = result.url
   const callback = result.callback
@@ -74,8 +74,29 @@ Q.jobs[Q.DUMP_JOB]
 
   }, e => e)
 })
+.on('failed', function(job, err) {
+  const {attempts, attemptsMade} = job
+  if (attempts !== attemptsMade)
+    return false
+
+  const error = {}
+  error.type = 'ytdl_dump_error'
+  error.description = err.message
+  error.message = 'Can not get media info of requested url, please try again.'
+  log('warning', error.type, {
+    id: job.data.id,
+    url: job.data.url,
+    desc: error.description
+  })
+
+  agent
+  .post(job.data.callback.url)
+  .send({ id: job.data.callback.id })
+  .send({ error })
+  .end((err, res) => {})
+})
 
 // declare dump job processor
 Q.jobs[Q.DUMP_JOB].process(4, require('./jobs/dump'))
 
-module.exports = require('koa')().use(router.routes())
+module.exports = app.use(router.routes())

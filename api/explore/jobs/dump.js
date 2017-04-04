@@ -1,12 +1,10 @@
-'use strict'
-const co = require('co')
-const engine = require('../../../lib/engine')
 const _ = require('underscore')
+const engine = require('../../../lib/engine')
 
-const delay = () => new Promise(res => setTimeout(res, 10000))
+// const delay = () => new Promise(res => setTimeout(res, 20000))
 
 // processor for dumping media
-module.exports = co.wrap(function* (job) {
+module.exports = async function (job) {
 
   const id = job.data.id
   const url = job.data.url
@@ -14,12 +12,8 @@ module.exports = co.wrap(function* (job) {
 
   let info
 
-  yield delay()
-
   try {
-    // job.log('dumping.')
-    info = yield engine.dump(url)
-    // job.log('dumping done. title: %s', info.title)
+    info = await engine.dump(url)
   }
   catch(error) {
     return { id, url, callback, error }
@@ -68,4 +62,4 @@ module.exports = co.wrap(function* (job) {
   }
 
   return { id, callback, media }
-})
+}

@@ -1,5 +1,3 @@
-'use strict'
-
 const Promise = require('bluebird')
 const bytes = require('bytes')
 const agent = require('superagent')
@@ -17,7 +15,7 @@ const formats = {
   'ogg': 'Voice',
 }
 
-module.exports = function* (job, media, webhook) {
+module.exports = async function (job, media, webhook) {
 
   // set bot url
   const botUrl = 'https://api.telegram.org/bot' + webhook.bot_token
@@ -53,7 +51,7 @@ module.exports = function* (job, media, webhook) {
       '\n\n<b>Download links are available for 2 hours</b>'
     ].join('')
 
-    yield sendMessage(botUrl, webhook.user_id, text, 'HTML')
+    await sendMessage(botUrl, webhook.user_id, text, 'HTML')
     return {}
   }
 
@@ -62,12 +60,12 @@ module.exports = function* (job, media, webhook) {
 
   // download file on disk and then send to client
   if (media.preferStream == false) {
-    source = yield engine.save(media, worker)
+    source = await engine.save(media, worker)
     job.progress(50, 100)
   }
 
   // send file to client
-  const response = yield send(job, botUrl, media, webhook.user_id, source)
+  const response = await send(job, botUrl, media, webhook.user_id, source)
 
   // remove file after sending
   if (media.preferStream == false) {
@@ -80,7 +78,7 @@ module.exports = function* (job, media, webhook) {
 /**
 * get method of telegram api depends on file format
 */
-function* getSendType (extension) {
+async function getSendType (extension) {
   extension = extension.toLowerCase().replace('.', '')
   return formats[extension] != null? formats[extension]: 'Document'
 }
@@ -88,15 +86,15 @@ function* getSendType (extension) {
 /**
 * Send File
 */
-function* send(job, botUrl, media, chat_id, source) {
+async function send(job, botUrl, media, chat_id, source) {
 
   let response
 
-  response = yield _sendDirect(botUrl, media, chat_id)
+  response = await _sendDirect(botUrl, media, chat_id)
 
   // fallback with mirror send on telegram direct sucks
   if (response.body && response.body.ok == false && response.body.error_code == 400)
-    response = yield _sendMirror(job, botUrl, media, chat_id, source)
+    response = await _sendMirror(job, botUrl, media, chat_id, source)
 
   // if telegram server timeout
   if (response.body == null || response.body.result == null)
@@ -119,13 +117,13 @@ function* send(job, botUrl, media, chat_id, source) {
  * Stream or post media file to telegram server
  * more stable
  */
-function* _sendMirror (job, botUrl, media, chat_id, source) {
+async function _sendMirror (job, botUrl, media, chat_id, source) {
 
   let sendType
 
   if (media.preferStream) {
 
-    sendType = yield getSendType(media.extension)
+    sendType = await getSendType(media.extension)
     source = {
       value: request({ url: source }).on('end', () => {
         // job.log('media request stream is done')
@@ -139,7 +137,7 @@ function* _sendMirror (job, botUrl, media, chat_id, source) {
     }
   }
   else {
-    sendType = yield getSendType(path.extname(source))
+    sendType = await getSendType(path.extname(source))
     source = fs.createReadStream(source)
     _action(botUrl, chat_id, sendType)
   }
@@ -155,7 +153,7 @@ function* _sendMirror (job, botUrl, media, chat_id, source) {
   if (sendType != 'Document')
     formData.duration = media.duration || 0
 
-  const response = yield request
+  const response = await request
     .postAsync({
       url: botUrl + '/send' + sendType,
       json: true,
@@ -169,13 +167,13 @@ function* _sendMirror (job, botUrl, media, chat_id, source) {
  * Telegram api now supports direct media url instead posting
  * but sometime sucks
  */
-function* _sendDirect (botUrl, media, chat_id) {
+async function _sendDirect (botUrl, media, chat_id) {
 
-  const sendType = yield getSendType(media.extension)
+  const sendType = await getSendType(media.extension)
 
   _action(botUrl, chat_id, sendType)
 
-  const response = yield request
+  const response = await request
     .postAsync({
       url: botUrl + '/send' + sendType,
       json: true,
@@ -205,12 +203,12 @@ function _action(botUrl, chat_id, sendType) {
 /**
 * Send message to user on telegram
 */
-function* sendMessage (botUrl, chat_id, text, parse_mode, disable_web_page_preview) {
+async function sendMessage (botUrl, chat_id, text, parse_mode, disable_web_page_preview) {
 
   parse_mode = parse_mode || ''
   disable_web_page_preview = disable_web_page_preview || true
 
-  return yield agent
+  return await agent
     .get(botUrl + '/sendMessage')
     .query({chat_id: chat_id})
     .query({text: text})
