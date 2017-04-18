@@ -29,6 +29,7 @@
     "koa-router": "^7.1.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.17.1",
+    "open-graph": "^0.2.3",
     "parse-domain": "^1.0.0",
     "pug": "^2.0.0-beta6",
     "redis": "^2.6.3",
