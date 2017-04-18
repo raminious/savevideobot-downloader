@@ -57,7 +57,7 @@ Q.jobs[Q.DUMP_JOB]
   }
 
   // update media
-  const attributes = error? { status: 'failed', note: error.message }: media
+  const attributes = error ? { status: 'failed', note: error.message } : media
   Media.update(id, attributes)
   .then(res => {
 
