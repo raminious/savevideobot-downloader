@@ -13,6 +13,7 @@ const formats = {
   'mp3': 'Audio',
   'mp4': 'Video',
   'ogg': 'Voice',
+  'jpg': 'Photo'
 }
 
 module.exports = async function (job, media, webhook) {
