@@ -1,8 +1,6 @@
 const _ = require('underscore')
 const engine = require('../../../lib/engine')
 
-// const delay = () => new Promise(res => setTimeout(res, 20000))
-
 // processor for dumping media
 module.exports = async function (job) {
 
