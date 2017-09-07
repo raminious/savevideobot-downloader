@@ -28,7 +28,6 @@ module.exports = async function (job) {
     dimension: (typeof info.width !== 'undefined' && info.width !== null) ? info.width + 'x' + info.height : '',
     worker: info.worker,
     status: 'ready',
-
     formats: (info.extractor !== 'youtube') ? [] :
     _.chain(info.formats)
     .filter(item => {
