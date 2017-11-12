@@ -32,7 +32,6 @@ app.use(ratelimit({
 }))
 
 router.get('/stream/:id/:format?/:worker?', bodyParser(), async function (ctx) {
-
   const id = ctx.params.id
   const format = ctx.params.format || 'best'
 
@@ -60,8 +59,9 @@ router.get('/stream/:id/:format?/:worker?', bodyParser(), async function (ctx) {
   ctx.set('Content-Disposition', 'attachment')
   ctx.set('Content-length', media.size)
 
-  if (~~media.duration > 0)
+  if (~~media.duration > 0) {
     ctx.set('X-Content-Duration', media.duration)
+  }
 
   ctx.attachment(media.filename)
 

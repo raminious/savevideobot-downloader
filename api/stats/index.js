@@ -16,7 +16,7 @@ router.get('/stats', async function (ctx) {
   if (process.env.NODE_ENV === 'production' && authorization !== password) {
     ctx.status = 403
     ctx.body = ''
-    return
+    return false
   }
 
   // get stats

@@ -57,18 +57,23 @@ Q.jobs[Q.DUMP_JOB]
   }
 
   // update media
-  const attributes = error ? { status: 'failed', note: error.message } : media
+  const attributes = !error ? media : {
+    status: 'failed',
+    note: error.message
+  }
+
   Media.update(id, attributes)
   .then(res => {
 
-    if (callback == null)
+    if (callback == null) {
       return false
+    }
 
     // callback
     agent
       .post(callback.url)
       .send({ id: callback.id })
-      .send({ media: media? Object.assign(media, {id}): undefined })
+      .send({ media: media ? Object.assign(media, {id}) : undefined })
       .send({ error })
       .end((err, res) => {})
 
@@ -76,8 +81,9 @@ Q.jobs[Q.DUMP_JOB]
 })
 .on('failed', function(job, err) {
   const {attempts, attemptsMade} = job
-  if (attempts !== attemptsMade)
+  if (attempts !== attemptsMade) {
     return false
+  }
 
   const error = {}
   error.type = 'ytdl_dump_error'
