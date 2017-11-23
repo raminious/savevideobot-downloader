@@ -20,9 +20,9 @@ app.use(ratelimit({
   db: redis,
   duration: 60000,
   max: 5,
-  id: function (context) {
+  id: function (ctx) {
     // do not ratelimit localhost requests
-    return context.ip == '127.0.0.1'? context.request.url: context.ip
+    return ctx.ip == '127.0.0.1' ? ctx.request.url : ctx.ip
   },
   headers: {
     remaining: 'Rate-Limit-Remaining',
@@ -32,7 +32,7 @@ app.use(ratelimit({
 }))
 
 router.get('/stream/:id/:format?/:worker?', bodyParser(), async function (ctx) {
-  const id = ctx.params.id
+  const { id } = ctx.params
   const format = ctx.params.format || 'best'
 
   ctx.assert(/^[0-9a-fA-F]{24}$/.test(id), 400, 'Invalid media id')
