@@ -39,11 +39,7 @@ router.post('/explore', bodyParser(), async function (ctx) {
 
 Q.jobs[Q.DUMP_JOB]
 .on('completed', function (job, result) {
-  const id = result.id
-  const url = result.url
-  const callback = result.callback
-  const error = result.error
-  const media = result.media
+  const { id, url, callback, media, error } = result
 
   // log error
   if (error) {
@@ -67,7 +63,7 @@ Q.jobs[Q.DUMP_JOB]
   .then(res => {
 
     if (!error) {
-      autoContent(id, media)
+      autoContent(url, media)
     }
 
     if (callback) {

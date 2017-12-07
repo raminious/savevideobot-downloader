@@ -16,7 +16,6 @@ module.exports = async function (job) {
 
   const media = {
     site: info.extractor,
-    url: url,
     download: info.url,
     thumbnail: info.thumbnail,
     duration: info.duration,
@@ -56,5 +55,5 @@ module.exports = async function (job) {
     .value()
   }
 
-  return { id, callback, media }
+  return { id, url, callback, media }
 }
