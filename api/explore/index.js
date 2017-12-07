@@ -2,6 +2,7 @@ const koa = require('koa')
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
 const agent = require('superagent')
+const autoContent = require('../../lib/autocontent')
 const log = require('../../log')
 const Q = require('../../lib/jobs')
 const Media = require('../../lib/resources/media')
@@ -10,7 +11,7 @@ const app = new koa()
 
 router.post('/explore', bodyParser(), async function (ctx) {
 
-  ctx.assert(ctx.is('json'), 415, 'content type should be json')
+  ctx.assert(ctx.is('json'), 415, 'Content type should be json')
 
   const id = ctx.request.body.id
   ctx.assert(id != null, 400, 'Id is required')
@@ -65,18 +66,18 @@ Q.jobs[Q.DUMP_JOB]
   Media.update(id, attributes)
   .then(res => {
 
-    if (callback == null) {
-      return false
+    if (!error) {
+      autoContent(id, media)
     }
 
-    // callback
-    agent
-      .post(callback.url)
-      .send({ id: callback.id })
-      .send({ media: media ? Object.assign(media, {id}) : undefined })
-      .send({ error })
-      .end((err, res) => {})
-
+    if (callback) {
+      agent
+        .post(callback.url)
+        .send({ id: callback.id })
+        .send({ media: media ? Object.assign(media, {id}) : undefined })
+        .send({ error })
+        .end((err, res) => {})
+    }
   }, e => e)
 })
 .on('failed', function(job, err) {
