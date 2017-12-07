@@ -16,6 +16,7 @@ module.exports = async function (job) {
 
   const media = {
     site: info.extractor,
+    url: url,
     download: info.url,
     thumbnail: info.thumbnail,
     duration: info.duration,
