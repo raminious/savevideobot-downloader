@@ -8,7 +8,6 @@ const hooks = {
 
 // processor for downloading media
 module.exports = async function (job) {
-
   const worker = config.download.defaultWorker
   const webhook = job.data.webhook
   const media = job.data.media
@@ -25,10 +24,9 @@ module.exports = async function (job) {
     return { webhook, callback, media, response }
   }
   catch(error) {
-
     error = {
       message: 'Can not download your requested url',
-      description: error.response? callback.url + ': ' + error.response.text: error.message,
+      description: error.response ? callback.url + ': ' + error.response.text : error.message,
       stack: error.stack
     }
 

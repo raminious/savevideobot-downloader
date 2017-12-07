@@ -14,13 +14,11 @@ const app = new koa()
 const maxSize = bytes.parse(config.download.maxSize)
 
 router.post('/send', bodyParser(), async function (ctx) {
-
   ctx.assert(ctx.is('json'), 415, 'content type should be json')
 
-  const id = ctx.request.body.id
-  const format = ctx.request.body.format || 'best'
-  const webhook = ctx.request.body.webhook
-  const callback = ctx.request.body.callback
+  const { body } = ctx.request
+  const { id, webhook, callback } = body
+  const format = body.format || 'best'
 
   // get media
   let media
@@ -75,13 +73,15 @@ Q.jobs[Q.SEND_JOB]
   const webhook = result.webhook
 
   // callback
-  agent
-    .post(callback.url)
-    .send({ id: callback.id })
-    .send({ response })
-    .send({ error })
-    .retry(2)
-    .end((err, res) => {})
+  if (callback) {
+    agent
+      .post(callback.url)
+      .send({ id: callback.id })
+      .send({ response })
+      .send({ error })
+      .retry(2)
+      .end((err, res) => {})
+  }
 
   // log error on log server
   if (error) {
@@ -94,12 +94,12 @@ Q.jobs[Q.SEND_JOB]
   }
 })
 .on('failed', function(job, err) {
-  const {attempts, attemptsMade} = job
+  const { attempts, attemptsMade } = job
+  const { callback, media } = job.data
 
-  if (attempts !== attemptsMade)
+  if (attempts !== attemptsMade) {
     return false
-
-  let media = job.data.media
+  }
 
   const error = {}
   error.type = 'ytdl_send_error'
@@ -118,12 +118,14 @@ Q.jobs[Q.SEND_JOB]
     desc: error.description
   })
 
-  agent
-  .post(job.data.callback.url)
-  .send({ id: job.data.callback.id })
-  .send({ error })
-  .retry(2)
-  .end((err, res) => {})
+  if (callback) {
+    agent
+      .post(callback.url)
+      .send({ id: callback.id })
+      .send({ error })
+      .retry(2)
+      .end((err, res) => {})
+  }
 })
 
 // declare job processors

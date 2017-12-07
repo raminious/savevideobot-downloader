@@ -3,10 +3,7 @@ const engine = require('../../../lib/engine')
 
 // processor for dumping media
 module.exports = async function (job) {
-
-  const id = job.data.id
-  const url = job.data.url
-  const callback = job.data.callback
+  const { id, url, callback } = job.data
 
   let info
 
