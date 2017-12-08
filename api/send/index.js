@@ -128,7 +128,4 @@ Q.jobs[Q.SEND_JOB]
   }
 })
 
-// declare job processors
-Q.jobs[Q.SEND_JOB].process(4, require('./jobs/send'))
-
 module.exports = app.use(router.routes())

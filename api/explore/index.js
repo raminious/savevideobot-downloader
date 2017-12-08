@@ -99,7 +99,4 @@ Q.jobs[Q.DUMP_JOB]
   .end((err, res) => {})
 })
 
-// declare dump job processor
-Q.jobs[Q.DUMP_JOB].process(4, require('./jobs/dump'))
-
 module.exports = app.use(router.routes())

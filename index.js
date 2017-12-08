@@ -5,6 +5,7 @@ const mount = require('koa-mount')
 const koa = require('koa')
 const log = require('./log')
 const config = require('./config.json')
+const Q = require('./lib/jobs')
 
 module.exports = function() {
 
@@ -50,6 +51,11 @@ module.exports = function() {
   app.use(mount(require('./api/download')))
   app.use(mount(require('./api/thumbnail')))
   app.use(mount(require('./api/stream')))
+
+  // jobs
+  Q.jobs[Q.SEND_JOB].process(4, require('./api/send/jobs/send'))
+  Q.jobs[Q.AUTOCONTENT_JOB].process(1, require('./api/send/jobs/send'))
+  Q.jobs[Q.DUMP_JOB].process(4, require('./api/explore/jobs/dump'))
 
   return app
 }
