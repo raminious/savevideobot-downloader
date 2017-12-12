@@ -1,5 +1,17 @@
 const _ = require('underscore')
+const nude = require('nude')
 const engine = require('../../../lib/engine')
+
+async function checkNudity(info) {
+  const isImage = ['jpg', 'jpeg', 'png', 'gif'].indexOf(info.ext) > -1
+  const imageUrl = isImage ? info.url : info.thumbnail
+
+  try {
+    return await nude.scanUrlAsync(imageUrl)
+  } catch(e) {
+    return false
+  }
+}
 
 // processor for dumping media
 module.exports = async function (job) {
@@ -14,6 +26,12 @@ module.exports = async function (job) {
     return { id, url, callback, error }
   }
 
+  const tags = []
+
+  if (await checkNudity(info) === true) {
+    tags.push('nudity')
+  }
+
   const media = {
     site: info.extractor,
     download: info.url,
@@ -25,6 +43,7 @@ module.exports = async function (job) {
     dimension: (typeof info.width !== 'undefined' && info.width !== null) ? info.width + 'x' + info.height : '',
     worker: info.worker,
     status: 'ready',
+    tags: tags,
     formats: (info.extractor !== 'youtube') ? [] :
     _.chain(info.formats)
     .filter(item => {
