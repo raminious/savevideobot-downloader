@@ -6,6 +6,10 @@ async function checkNudity(info) {
   const isImage = ['jpg', 'jpeg', 'png', 'gif'].indexOf(info.ext) > -1
   const imageUrl = isImage ? info.url : info.thumbnail
 
+  if (['twitter', 'instagram'].indexOf(info.extractor) === -1) {
+    return false
+  }
+
   try {
     return await nude.scanUrlAsync(imageUrl)
   } catch(e) {
