@@ -2,7 +2,6 @@ const koa = require('koa')
 const router = require('koa-router')()
 const bodyParser = require('koa-bodyparser')
 const agent = require('superagent')
-const autoContent = require('../../lib/autocontent')
 const log = require('../../log')
 const Q = require('../../lib/jobs')
 const Media = require('../../lib/resources/media')
@@ -61,11 +60,6 @@ Q.jobs[Q.DUMP_JOB]
 
   Media.update(id, attributes)
   .then(res => {
-
-    if (!error) {
-      autoContent(url, media)
-    }
-
     if (callback) {
       agent
         .post(callback.url)
