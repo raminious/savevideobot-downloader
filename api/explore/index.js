@@ -27,70 +27,70 @@ router.post('/explore', bodyParser(), async function (ctx) {
     url,
     callback
   }, {
-    attempts: 2,
-    timeout: 30 * 1000,
-    removeOnComplete: true,
-    removeOnFail: true
-  })
+      attempts: 2,
+      timeout: 40 * 1000,
+      removeOnComplete: true,
+      removeOnFail: true
+    })
 
   ctx.body = {}
 })
 
 Q.jobs[Q.DUMP_JOB]
-.on('completed', function (job, result) {
-  const { id, url, callback, media, error } = result
+  .on('completed', function (job, result) {
+    const { id, url, callback, media, error } = result
 
-  // log error
-  if (error) {
-    log('warning', error.type || error.message, {
-      target: error.target,
-      action: error.action,
-      task: 'media/explore',
-      url: url,
-      description: error.description,
-      source_address: error.source_address
-    })
-  }
-
-  // update media
-  const attributes = !error ? media : {
-    status: 'failed',
-    note: error.message
-  }
-
-  Media.update(id, attributes)
-  .then(res => {
-    if (callback) {
-      agent
-        .post(callback.url)
-        .send({ id: callback.id })
-        .send({ media: media ? Object.assign(media, {id}) : undefined })
-        .send({ error })
-        .end((err, res) => {})
+    // log error
+    if (error) {
+      log('warning', error.type || error.message, {
+        target: error.target,
+        action: error.action,
+        task: 'media/explore',
+        url: url,
+        description: error.description,
+        source_address: error.source_address
+      })
     }
-  }, e => e)
-})
-.on('failed', function(job, err) {
-  const {attempts, attemptsMade} = job
-  if (attempts !== attemptsMade) {
-    return false
-  }
 
-  const error = {}
-  error.type = 'ytdl_dump_error'
-  error.description = err.message
-  error.message = 'Can not get media info of requested url, please try again.'
-  log('warning', error.type, {
-    id: job.data.id,
-    url: job.data.url,
-    desc: error.description
+    // update media
+    const attributes = !error ? media : {
+      status: 'failed',
+      note: error.message
+    }
+
+    Media.update(id, attributes)
+      .then(res => {
+        if (callback) {
+          agent
+            .post(callback.url)
+            .send({ id: callback.id })
+            .send({ media: media ? Object.assign(media, { id }) : undefined })
+            .send({ error })
+            .end((err, res) => { })
+        }
+      }, e => e)
   })
+  .on('failed', function (job, err) {
+    const { attempts, attemptsMade } = job
+    if (attempts !== attemptsMade) {
+      return false
+    }
 
-  agent
-  .post(job.data.callback.url)
-  .send({ id: job.data.callback.id })
-  .send({ error })
-  .end((err, res) => {})
-})
+    const error = {}
+    error.type = 'ytdl_dump_error'
+    error.description = err.message
+    error.message = 'Can not get media info of requested url, please try again.'
+    log('warning', error.type, {
+      id: job.data.id,
+      url: job.data.url,
+      desc: error.description
+    })
+
+    agent
+      .post(job.data.callback.url)
+      .send({ id: job.data.callback.id })
+      .send({ error })
+      .end((err, res) => { })
+  })
 
 module.exports = app.use(router.routes())
