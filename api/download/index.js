@@ -43,9 +43,9 @@ router.get('/download/:id/:format?/:type?', bodyParser(), async function (ctx, n
       ". \nUse direct download link instead.')"
   }
 
-  // if (media.size > 0) {
-  //   media.stream = "javascript:alert('Mirror downloading is not available at this time.')"
-  // }
+  if (media.size > 0) {
+    media.stream = "javascript:alert('Mirror downloading is not available for free users.')"
+  }
 
   // convert media size to human readable
   media.size = bytes(media.size)
