@@ -53,8 +53,8 @@ module.exports = function() {
   app.use(mount(require('./api/stream')))
 
   // jobs
-  Q.jobs[Q.SEND_JOB].process(2, require('./api/send/jobs/send'))
-  Q.jobs[Q.DUMP_JOB].process(3, require('./api/explore/jobs/dump'))
+  Q.jobs[Q.SEND_JOB].process(3, require('./api/send/jobs/send'))
+  Q.jobs[Q.DUMP_JOB].process(4, require('./api/explore/jobs/dump'))
 
   return app
 }
