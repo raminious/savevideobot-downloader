@@ -1,5 +1,4 @@
 const _ = require('underscore')
-const nude = require('nude')
 const engine = require('../../../lib/engine')
 
 // processor for dumping media
